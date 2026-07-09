@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette charte Nathy Food */
+  --color-liboke:  #E2572B;
+  --color-safou:   #F4A93B;
+  --color-pili:    #B23A2E;
+  --color-feuille: #4F7A4A;
+  --color-kwanga:  #FAF3E8;
+  --color-encre:   #2B1B12;
+
+  /* Typographie */
+  --font-sans:   var(--font-inter);
+  --font-serif:  var(--font-fraunces);
+}
+
+/* Tokens verre — utilisés uniquement sur les éléments flottants */
+:root {
+  --glass-bg:       rgba(250, 243, 232, 0.75);
+  --glass-border:   rgba(255, 255, 255, 0.4);
+  --glass-bg-dark:  rgba(43, 27, 18, 0.70);
+}
+
+body {
+  background-color: var(--color-kwanga);
+  color: var(--color-encre);
+}
+
+/* Utilitaires verre — barre action fiche plat, CartSheet, icône panier */
+@utility glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter:         blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+@utility glass-sm {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter:         blur(12px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
+@utility glass-footer {
+  background: rgba(250, 243, 232, 0.92);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter:         blur(24px) saturate(180%);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Fallback Safari ancien / WebView sans backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass, .glass-sm { background: rgba(250, 243, 232, 0.97); }
+  .glass-footer      { background: rgba(250, 243, 232, 0.98); }
+}
