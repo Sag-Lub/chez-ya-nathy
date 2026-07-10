@@ -19,8 +19,15 @@ export default async function DishPage({ params }: PageProps) {
 
   if (error || !data) notFound()
 
-  // Supabase retourne stories sous forme d'un tableau (relation 1-to-1 unique)
-  const dish = data as Dish & { stories: Story[] }
+  // Relation 1-à-1 (unique sur dish_id) : PostgREST renvoie un objet, pas un tableau
+  const rawStories = (data as { stories: Story | Story[] | null }).stories
+  const stories: Story[] = Array.isArray(rawStories)
+    ? rawStories
+    : rawStories
+      ? [rawStories]
+      : []
+
+  const dish = { ...(data as Dish), stories }
 
   return <DishDetailClient dish={dish} />
 }
