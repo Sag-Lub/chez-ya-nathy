@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nathy Food",
-    short_name: "Nathy Food",
-    description: "Commandez les plats cuisinés maison de Nathy",
+    name: "Chez ya Nathy",
+    short_name: "Chez ya Nathy",
+    description: "La cuisine congolaise faite maison, livrée à Lyon et alentours",
     start_url: "/",
     display: "standalone",
     background_color: "#FAF3E8",

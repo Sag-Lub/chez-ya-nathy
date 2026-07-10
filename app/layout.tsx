@@ -15,13 +15,21 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Nathy Food",
-  description: "Commandez les plats cuisinés maison de Nathy",
+  title: "Chez ya Nathy — Cuisine congolaise faite maison",
+  description:
+    "Commandez les plats congolais faits maison de Nathy, livrés à Lyon et alentours. Moambe, pondu, makayabu… le goût du pays, chez vous.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Nathy Food",
+    title: "Chez ya Nathy",
+  },
+  openGraph: {
+    title: "Chez ya Nathy",
+    description:
+      "La cuisine congolaise faite maison, livrée à Lyon et alentours.",
+    locale: "fr_FR",
+    type: "website",
   },
 };
 
