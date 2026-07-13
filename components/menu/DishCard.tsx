@@ -61,6 +61,13 @@ export function DishCard({ dish }: DishCardProps) {
           </h3>
         </Link>
 
+        {/* Sous-titre (traduction française) */}
+        {dish.subtitle && (
+          <p className="text-[11px] font-medium text-liboke/70 mt-0.5 line-clamp-1">
+            {dish.subtitle}
+          </p>
+        )}
+
         {/* Description */}
         <p className="text-xs text-encre/45 line-clamp-2 mt-1 mb-4 leading-relaxed">
           {dish.description}

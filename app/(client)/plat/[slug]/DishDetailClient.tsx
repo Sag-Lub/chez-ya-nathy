@@ -133,6 +133,9 @@ export function DishDetailClient({ dish }: Props) {
           <h1 className="font-serif text-2xl font-bold text-encre leading-tight text-balance">
             {dish.name}
           </h1>
+          {dish.subtitle && (
+            <p className="text-sm font-medium text-liboke/70 mt-0.5">{dish.subtitle}</p>
+          )}
           <p className="mt-1 font-serif text-xl font-semibold text-liboke">
             {formatPrice(dish.price_cents)}
           </p>

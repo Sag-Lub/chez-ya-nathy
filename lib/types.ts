@@ -25,6 +25,7 @@ export type Dish = {
   id: string
   category_id: string
   name: string
+  subtitle: string | null
   slug: string
   description: string
   price_cents: number
