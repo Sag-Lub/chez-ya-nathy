@@ -6,7 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, ShoppingBag, Truck, UtensilsCrossed } from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { createClient } from "@/lib/supabase/client"
-import { formatPrice, formatDateLong, formatTimeRange } from "@/lib/utils"
+import { formatPrice, formatDateLong, formatTimeRange, isDateAllowedForDish } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import type { DeliveryZone, DeliverySlot } from "@/lib/types"
@@ -129,6 +129,7 @@ export function OrderForm() {
   const [address,        setAddress]        = useState("")
   const [slots,          setSlots]          = useState<DeliverySlot[]>([])
   const [slotsLoading,   setSlotsLoading]   = useState(false)
+  const [weekendOnlyRestriction, setWeekendOnlyRestriction] = useState(false)
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [errors2, setErrors2] = useState<Record<string, string>>({})
 
@@ -195,10 +196,23 @@ export function OrderForm() {
       .order("slot_date")
       .order("start_time")
 
-    setSlots((rawSlots ?? []).filter((s) => s.orders_count < s.max_orders) as DeliverySlot[])
+    // Un plat réservé au week-end restreint les jours de livraison proposés
+    const dishIds = [...new Set(items.map((i) => i.dishId))]
+    const { data: cartDishes } = await supabase
+      .from("dishes")
+      .select("id, available_days")
+      .in("id", dishIds)
+
+    const availableSlots = (rawSlots ?? []).filter((s) => s.orders_count < s.max_orders) as DeliverySlot[]
+    const filteredSlots = availableSlots.filter((slot) =>
+      (cartDishes ?? []).every((d) => isDateAllowedForDish(slot.slot_date, d.available_days))
+    )
+
+    setWeekendOnlyRestriction(filteredSlots.length < availableSlots.length)
+    setSlots(filteredSlots)
     setSlotsLoading(false)
     setZoneLoading(false)
-  }, [postalCode, subtotal, supabase])
+  }, [postalCode, subtotal, items, supabase])
 
   // ─── Panier vide — après tous les hooks (Rules of Hooks) ─────
   if (items.length === 0) {
@@ -336,6 +350,11 @@ export function OrderForm() {
                 {zone && (
                   <div>
                     <p className="text-sm font-medium text-encre mb-3">Choisir un créneau</p>
+                    {weekendOnlyRestriction && (
+                      <p className="text-xs text-pili bg-pili/8 rounded-xl px-3 py-2 mb-3">
+                        Un ou plusieurs plats de votre panier ne sont livrés que le week-end — seuls ces créneaux sont proposés.
+                      </p>
+                    )}
                     {slotsLoading ? (
                       <div className="flex items-center gap-2 text-sm text-encre/50">
                         <Loader2 className="h-4 w-4 animate-spin" />

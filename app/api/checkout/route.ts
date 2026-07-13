@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripe } from "@/lib/stripe"
 import { sendOrderConfirmationEmail } from "@/lib/email"
+import { isDateAllowedForDish } from "@/lib/utils"
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   const dishIds = [...new Set(cartItems.map((i) => i.dishId))]
   const { data: dishes, error: dishErr } = await supabase
     .from("dishes")
-    .select("id, name, price_cents, is_available")
+    .select("id, name, price_cents, is_available, available_days")
     .in("id", dishIds)
 
   if (dishErr || !dishes) {
@@ -77,12 +78,23 @@ export async function POST(req: NextRequest) {
   if (type === "livraison" && slotId) {
     const { data: slot } = await supabase
       .from("delivery_slots")
-      .select("id, is_active, orders_count, max_orders")
+      .select("id, slot_date, is_active, orders_count, max_orders")
       .eq("id", slotId)
       .single()
 
     if (!slot || !slot.is_active || slot.orders_count >= slot.max_orders) {
       return NextResponse.json({ error: "Créneau non disponible — choisissez-en un autre" }, { status: 409 })
+    }
+
+    // Un plat réservé au week-end ne peut pas être livré un jour de semaine
+    for (const item of cartItems) {
+      const dish = dishes.find((d) => d.id === item.dishId)
+      if (dish && !isDateAllowedForDish(slot.slot_date, dish.available_days)) {
+        return NextResponse.json(
+          { error: `${dish.name} n'est disponible que le week-end — choisissez un autre créneau` },
+          { status: 409 }
+        )
+      }
     }
   }
 

@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Flame } from "lucide-react"
-import { formatPrice, dishImageClass, cn } from "@/lib/utils"
+import { Flame, CalendarDays } from "lucide-react"
+import { formatPrice, dishImageClass, cn, isWeekendOnly } from "@/lib/utils"
 import type { Dish } from "@/lib/types"
 
 interface DishCardProps {
@@ -47,12 +47,20 @@ export function DishCard({ dish }: DishCardProps) {
 
       {/* ── Carte blanche ────────────────────────────────────────── */}
       <div className="bg-white rounded-[28px] pt-[4.75rem] px-5 pb-5 text-center shadow-[0_10px_30px_rgba(43,27,18,0.08)]">
-        {/* Badge région */}
-        {dish.region && (
-          <span className="inline-block bg-safou/15 text-encre/70 text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1.5">
-            {dish.region}
-          </span>
-        )}
+        {/* Badge région / week-end */}
+        <div className="flex items-center justify-center gap-1.5 flex-wrap mb-1.5">
+          {dish.region && (
+            <span className="inline-block bg-safou/15 text-encre/70 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+              {dish.region}
+            </span>
+          )}
+          {isWeekendOnly(dish.available_days) && (
+            <span className="inline-flex items-center gap-1 bg-pili/10 text-pili text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+              <CalendarDays className="h-2.5 w-2.5" />
+              Week-end uniquement
+            </span>
+          )}
+        </div>
 
         {/* Nom */}
         <Link href={`/plat/${dish.slug}`}>

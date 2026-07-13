@@ -4,7 +4,7 @@ import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { formatDateLong, formatTimeRange } from "@/lib/utils"
 import { cn } from "@/lib/utils"
-import { Plus, Trash2, Loader2 } from "lucide-react"
+import { Plus, Trash2, Loader2, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import type { DeliverySlot } from "@/lib/types"
 
@@ -17,6 +17,16 @@ const TIME_SLOTS = [
   { start: "18:30:00", end: "19:00:00" },
   { start: "19:00:00", end: "19:30:00" },
   { start: "19:30:00", end: "20:00:00" },
+]
+
+const WEEKDAYS = [
+  { value: 1, label: "Lun" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mer" },
+  { value: 4, label: "Jeu" },
+  { value: 5, label: "Ven" },
+  { value: 6, label: "Sam" },
+  { value: 0, label: "Dim" },
 ]
 
 interface Props {
@@ -32,6 +42,16 @@ export function SlotManager({ initialSlots }: Props) {
   const [date,      setDate]      = useState("")
   const [maxOrders, setMaxOrders] = useState(5)
   const [selected,  setSelected]  = useState<Set<string>>(new Set())
+
+  // Générateur en masse
+  const [genDays,      setGenDays]      = useState(14)
+  const [genWeekdays,  setGenWeekdays]  = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5, 6]))
+  const [genTimes,     setGenTimes]     = useState<Set<string>>(
+    new Set(TIME_SLOTS.map((t) => `${t.start}|${t.end}`))
+  )
+  const [genMaxOrders, setGenMaxOrders] = useState(5)
+  const [generating,   setGenerating]   = useState(false)
+  const [genResult,     setGenResult]   = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -79,6 +99,73 @@ export function SlotManager({ initialSlots }: Props) {
     setLoading(false)
   }, [date, selected, maxOrders, supabase])
 
+  // ── Génération en masse sur une plage de dates ──────────────────
+  const generateSlots = useCallback(async () => {
+    if (genWeekdays.size === 0 || genTimes.size === 0) return
+    setGenerating(true)
+    setGenResult(null)
+
+    const existingKeys = new Set(slots.map((s) => `${s.slot_date}|${s.start_time}`))
+    const toInsert: Omit<DeliverySlot, "id">[] = []
+
+    for (let i = 0; i < genDays; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      const isoDate = d.toISOString().split("T")[0]
+      if (!genWeekdays.has(d.getDay())) continue
+
+      for (const key of genTimes) {
+        const [start, end] = key.split("|")
+        if (existingKeys.has(`${isoDate}|${start}`)) continue
+        toInsert.push({
+          slot_date:    isoDate,
+          start_time:   start,
+          end_time:     end,
+          max_orders:   genMaxOrders,
+          orders_count: 0,
+          is_active:    true,
+        })
+      }
+    }
+
+    if (toInsert.length === 0) {
+      setGenResult("Tous ces créneaux existent déjà.")
+      setGenerating(false)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from("delivery_slots")
+      .insert(toInsert)
+      .select()
+
+    if (!error && data) {
+      setSlots((prev) => [...prev, ...(data as DeliverySlot[])])
+      setGenResult(`${data.length} créneau${data.length > 1 ? "x" : ""} créé${data.length > 1 ? "s" : ""}.`)
+    } else {
+      console.error("[admin] bulk slot generation error:", error)
+      setGenResult("Erreur lors de la génération.")
+    }
+    setGenerating(false)
+  }, [genDays, genWeekdays, genTimes, genMaxOrders, slots, supabase])
+
+  const toggleGenWeekday = (value: number) => {
+    setGenWeekdays((prev) => {
+      const next = new Set(prev)
+      next.has(value) ? next.delete(value) : next.add(value)
+      return next
+    })
+  }
+
+  const toggleGenTime = (start: string, end: string) => {
+    const key = `${start}|${end}`
+    setGenTimes((prev) => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
   // ── Suppression ───────────────────────────────────────────────
   const deleteSlot = useCallback(async (id: string) => {
     setDeleting(id)
@@ -98,9 +185,105 @@ export function SlotManager({ initialSlots }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* ── Formulaire création ─────────────────────────────────── */}
+      {/* ── Génération automatique en masse ─────────────────────── */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-liboke/20 space-y-4">
+        <h2 className="font-semibold text-encre flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-liboke" />
+          Générer des créneaux à l&apos;avance
+        </h2>
+
+        <label className="block">
+          <span className="text-sm font-medium text-encre mb-1.5 block">
+            Nombre de jours à générer (à partir d&apos;aujourd&apos;hui)
+          </span>
+          <input
+            type="number" min={1} max={90}
+            value={genDays}
+            onChange={(e) => setGenDays(Number(e.target.value))}
+            className="w-24 h-11 px-3 rounded-xl border-2 border-encre/15 focus:border-liboke focus:outline-none text-encre"
+          />
+        </label>
+
+        <div>
+          <span className="text-sm font-medium text-encre mb-2 block">Jours de la semaine</span>
+          <div className="grid grid-cols-7 gap-1.5">
+            {WEEKDAYS.map(({ value, label }) => {
+              const active = genWeekdays.has(value)
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggleGenWeekday(value)}
+                  className={cn(
+                    "py-2 rounded-xl border text-xs font-semibold transition-all",
+                    active
+                      ? "border-liboke bg-liboke/10 text-liboke"
+                      : "border-encre/15 text-encre/50 hover:border-encre/30"
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div>
+          <span className="text-sm font-medium text-encre mb-2 block">Horaires</span>
+          <div className="grid grid-cols-2 gap-2">
+            {TIME_SLOTS.map(({ start, end }) => {
+              const key    = `${start}|${end}`
+              const active = genTimes.has(key)
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleGenTime(start, end)}
+                  className={cn(
+                    "py-2.5 rounded-xl border text-sm font-medium transition-all",
+                    active
+                      ? "border-liboke bg-liboke/10 text-liboke"
+                      : "border-encre/15 text-encre/70 hover:border-encre/30"
+                  )}
+                >
+                  {formatTimeRange(start, end)}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <label className="block">
+          <span className="text-sm font-medium text-encre mb-1.5 block">
+            Commandes max par créneau
+          </span>
+          <input
+            type="number" min={1} max={20}
+            value={genMaxOrders}
+            onChange={(e) => setGenMaxOrders(Number(e.target.value))}
+            className="w-24 h-11 px-3 rounded-xl border-2 border-encre/15 focus:border-liboke focus:outline-none text-encre"
+          />
+        </label>
+
+        <Button
+          onClick={generateSlots}
+          disabled={generating || genWeekdays.size === 0 || genTimes.size === 0}
+          className="w-full"
+        >
+          {generating
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> Génération…</>
+            : <><Sparkles className="h-4 w-4" /> Générer les créneaux</>
+          }
+        </Button>
+
+        {genResult && (
+          <p className="text-sm text-center text-encre/60">{genResult}</p>
+        )}
+      </div>
+
+      {/* ── Formulaire création manuelle ─────────────────────────── */}
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-encre/8 space-y-4">
-        <h2 className="font-semibold text-encre">Ajouter des créneaux</h2>
+        <h2 className="font-semibold text-encre">Ajouter un créneau ponctuel</h2>
 
         <label className="block">
           <span className="text-sm font-medium text-encre mb-1.5 block">Date</span>

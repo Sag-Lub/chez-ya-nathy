@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Flame, Minus, Plus, ShoppingBag } from "lucide-react"
+import { ArrowLeft, CalendarDays, Flame, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useCartStore } from "@/store/cart"
-import { formatPrice, cn, dishImageClass } from "@/lib/utils"
+import { formatPrice, cn, dishImageClass, isWeekendOnly } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import type { Dish, DishOption, SpiceLevel, Story } from "@/lib/types"
 
@@ -125,11 +125,19 @@ export function DishDetailClient({ dish }: Props) {
       <div className="max-w-lg mx-auto px-5 pt-5 pb-36">
         {/* Titre + région — centrés */}
         <div className="mb-4 text-center">
-          {dish.region && (
-            <span className="inline-block bg-safou text-encre text-[10px] font-bold px-2.5 py-1 rounded-full mb-2">
-              {dish.region}
-            </span>
-          )}
+          <div className="flex items-center justify-center gap-1.5 flex-wrap mb-2">
+            {dish.region && (
+              <span className="inline-block bg-safou text-encre text-[10px] font-bold px-2.5 py-1 rounded-full">
+                {dish.region}
+              </span>
+            )}
+            {isWeekendOnly(dish.available_days) && (
+              <span className="inline-flex items-center gap-1 bg-pili/10 text-pili text-[10px] font-bold px-2.5 py-1 rounded-full">
+                <CalendarDays className="h-3 w-3" />
+                Disponible le week-end uniquement
+              </span>
+            )}
+          </div>
           <h1 className="font-serif text-2xl font-bold text-encre leading-tight text-balance">
             {dish.name}
           </h1>
