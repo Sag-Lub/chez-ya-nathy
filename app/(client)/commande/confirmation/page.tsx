@@ -1,4 +1,6 @@
-"use client"
+-"use client"
+
+import { Suspense } from "react"
 
 import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
@@ -9,7 +11,7 @@ import { formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import type { Order } from "@/lib/types"
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const params    = useSearchParams()
   const token     = params.get("token")
   const clearCart = useCartStore((s) => s.clearCart)
@@ -140,5 +142,13 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </div>
+  )
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-kwanga flex items-center justify-center"><p className="text-encre/60">Chargement…</p></div>}>
+      <ConfirmationContent />
+    </Suspense>
   )
 }
