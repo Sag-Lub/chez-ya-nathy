@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { stripe } from "@/lib/stripe"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 // Désactive le body-parser de Next.js — indispensable pour la vérification Stripe
 export const dynamic = "force-dynamic"
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
       email:                meta.customer_email || null,
       type:                 meta.order_type as "livraison" | "emporter",
       status:               "recue",
+      payment_method:       "carte",
       address:              meta.address || null,
       postal_code:          meta.postal_code || null,
       slot_id:              meta.slot_id || null,
@@ -83,23 +85,45 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Insertion des lignes de commande ──────────────────────────
-  if (cartItems.length > 0) {
-    const { error: itemsErr } = await admin.from("order_items").insert(
-      cartItems.map((item) => ({
-        order_id:         order.id,
-        dish_id:          item.dishId || null,
-        dish_name:        item.name,
-        unit_price_cents: item.unitPriceCents,
-        quantity:         item.quantity,
-        spice:            item.spice as "doux" | "moyen" | "fort" | "pili_pili_a_part" | null,
-        options:          [],
-      }))
-    )
+  const orderItems = cartItems.map((item) => ({
+    order_id:         order.id,
+    dish_id:          item.dishId || null,
+    dish_name:        item.name,
+    unit_price_cents: item.unitPriceCents,
+    quantity:         item.quantity,
+    spice:            item.spice as "doux" | "moyen" | "fort" | "pili_pili_a_part" | null,
+    options:          [] as { name: string; extra_price_cents?: number }[],
+  }))
+
+  if (orderItems.length > 0) {
+    const { error: itemsErr } = await admin.from("order_items").insert(orderItems)
     if (itemsErr) {
       console.error("[webhook] order_items insert error:", itemsErr)
     }
   }
 
   console.log(`[webhook] ✅ Commande créée : ${order.id} (token: ${meta.public_token})`)
+
+  // ── Email de confirmation (best-effort, ne bloque pas le webhook) ──
+  if (meta.customer_email) {
+    try {
+      await sendOrderConfirmationEmail({
+        email:            meta.customer_email,
+        customerName:     meta.customer_name,
+        publicToken:      meta.public_token,
+        type:             meta.order_type as "livraison" | "emporter",
+        paymentMethod:    "carte",
+        address:          meta.address || null,
+        postalCode:       meta.postal_code || null,
+        items:            orderItems.map((i) => ({ ...i, id: "", order_id: order.id })),
+        subtotalCents:    Number(meta.subtotal_cents),
+        deliveryFeeCents: Number(meta.delivery_fee_cents),
+        totalCents:       session.amount_total ?? 0,
+      })
+    } catch (err) {
+      console.error("[webhook] email confirmation error:", err)
+    }
+  }
+
   return new NextResponse("OK", { status: 200 })
 }

@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { stripe } from "@/lib/stripe"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 export async function POST(req: NextRequest) {
-  // ── Garde : clé Stripe configurée ? ───────────────────────────
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json(
-      { error: "STRIPE_SECRET_KEY manquante — remplis .env.local" },
-      { status: 503 }
-    )
-  }
-
   const body = await req.json()
-  const { cartItems, customer, type, postalCode, address, slotId } = body as {
+  const { cartItems, customer, type, postalCode, address, slotId, paymentMethod } = body as {
     cartItems: { dishId: string; quantity: number; spice?: string; selectedOptionIds?: string[]; displayName?: string }[]
     customer: { name: string; phone: string; email?: string }
     type: "livraison" | "emporter"
     postalCode?: string
     address?: string
     slotId?: string
+    paymentMethod: "carte" | "especes"
+  }
+
+  // ── Garde : clé Stripe configurée ? (uniquement pour le paiement carte) ─
+  if (paymentMethod === "carte" && !process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json(
+      { error: "STRIPE_SECRET_KEY manquante — remplis .env.local" },
+      { status: 503 }
+    )
   }
 
   if (!cartItems?.length) {
@@ -100,6 +103,79 @@ export async function POST(req: NextRequest) {
     (s, i) => s + i.unitPriceCents * i.quantity, 0
   )
   const publicToken = crypto.randomUUID()
+
+  // ── 4bis. Paiement en espèces : commande créée directement ────
+  // Pas de Stripe impliqué, donc pas de webhook — le service role
+  // insère la commande ici, avec les mêmes montants vérifiés côté serveur.
+  if (paymentMethod === "especes") {
+    const admin = createAdminClient()
+
+    const { data: order, error: orderErr } = await admin
+      .from("orders")
+      .insert({
+        public_token:       publicToken,
+        customer_name:      customer.name,
+        phone:              customer.phone,
+        email:              customer.email || null,
+        type,
+        status:             "recue",
+        payment_method:     "especes",
+        address:            type === "livraison" ? (address ?? null) : null,
+        postal_code:        type === "livraison" ? (postalCode ?? null) : null,
+        slot_id:            type === "livraison" ? (slotId ?? null) : null,
+        subtotal_cents:     subtotalCents,
+        delivery_fee_cents: deliveryFeeCents,
+        total_cents:        subtotalCents + deliveryFeeCents,
+        notes:              null,
+        stripe_session_id:  null,
+        stripe_payment_intent: null,
+      })
+      .select("id")
+      .single()
+
+    if (orderErr || !order) {
+      return NextResponse.json({ error: "Impossible de créer la commande" }, { status: 500 })
+    }
+
+    const orderItems = verifiedItems.map((item) => ({
+      order_id:         order.id,
+      dish_id:          item.dishId,
+      dish_name:        item.name,
+      unit_price_cents: item.unitPriceCents,
+      quantity:         item.quantity,
+      spice:            item.spice as "doux" | "moyen" | "fort" | "pili_pili_a_part" | null,
+      options:          [] as { name: string; extra_price_cents?: number }[],
+    }))
+
+    const { error: itemsErr } = await admin.from("order_items").insert(orderItems)
+    if (itemsErr) {
+      console.error("[checkout] order_items insert error (espèces):", itemsErr)
+    }
+
+    if (customer.email) {
+      try {
+        await sendOrderConfirmationEmail({
+          email:            customer.email,
+          customerName:     customer.name,
+          publicToken,
+          type,
+          paymentMethod:    "especes",
+          address:          type === "livraison" ? (address ?? null) : null,
+          postalCode:       type === "livraison" ? (postalCode ?? null) : null,
+          items:            orderItems.map((i) => ({ ...i, id: "", order_id: order.id })),
+          subtotalCents,
+          deliveryFeeCents,
+          totalCents:       subtotalCents + deliveryFeeCents,
+        })
+      } catch (err) {
+        console.error("[checkout] email confirmation error (espèces):", err)
+      }
+    }
+
+    return NextResponse.json({
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/commande/confirmation?token=${publicToken}`,
+    })
+  }
 
   // ── 5. Métadonnées compactes pour le webhook ──────────────────
   // Format par item : dishId|qty|unitPrice|spice|optName1~optName2

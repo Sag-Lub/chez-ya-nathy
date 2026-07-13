@@ -4,6 +4,7 @@
 export type SpiceLevel = 'doux' | 'moyen' | 'fort' | 'pili_pili_a_part'
 export type OrderStatus = 'recue' | 'confirmee' | 'en_cuisine' | 'en_livraison' | 'livree' | 'annulee'
 export type OrderType = 'livraison' | 'emporter'
+export type PaymentMethod = 'carte' | 'especes'
 
 export type Category = {
   id: string
@@ -94,6 +95,7 @@ export type Order = {
   total_cents: number
   notes: string | null
   stripe_session_id: string | null
+  payment_method: PaymentMethod
   created_at: string
   updated_at: string
   order_items?: OrderItem[]
@@ -164,9 +166,10 @@ export type Database = {
     Views:     Record<string, never>
     Functions: Record<string, never>
     Enums: {
-      spice_level:  SpiceLevel
-      order_status: OrderStatus
-      order_type:   OrderType
+      spice_level:     SpiceLevel
+      order_status:    OrderStatus
+      order_type:      OrderType
+      payment_method:  PaymentMethod
     }
   }
 }

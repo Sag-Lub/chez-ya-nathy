@@ -172,12 +172,47 @@ function OrderCard({
       </div>
 
       {/* Type + adresse */}
-      <p className="text-xs text-encre/60 mb-3">
+      <p className="text-xs text-encre/60 mb-1.5">
         {order.type === "livraison"
           ? `🛵 ${order.address ?? ""} ${order.postal_code ?? ""}`
           : "🥡 À emporter"
         }
       </p>
+
+      {/* Mode de paiement */}
+      <p className="text-xs mb-3">
+        {order.payment_method === "especes" ? (
+          <span className="font-semibold text-safou">💵 Espèces à encaisser</span>
+        ) : (
+          <span className="text-encre/40">💳 Payé par carte</span>
+        )}
+      </p>
+
+      {/* Détail des plats */}
+      {order.order_items && order.order_items.length > 0 && (
+        <ul className="space-y-1.5 mb-3 bg-encre/[0.03] rounded-xl p-3">
+          {order.order_items.map((item) => (
+            <li key={item.id} className="text-sm text-encre">
+              <span className="font-semibold">{item.quantity}×</span> {item.dish_name}
+              {item.spice && (
+                <span className="text-xs text-encre/50"> · {item.spice}</span>
+              )}
+              {item.options.length > 0 && (
+                <span className="text-xs text-encre/50">
+                  {" "}· {item.options.map((o) => o.name).join(", ")}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Notes du client */}
+      {order.notes && (
+        <p className="text-xs text-encre/60 italic mb-3 bg-safou/10 rounded-xl px-3 py-2">
+          « {order.notes} »
+        </p>
+      )}
 
       {/* Boutons de statut */}
       {!archived && (

@@ -14,7 +14,9 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
   return (
     <div className="min-h-screen bg-encre/5">
       <header className="bg-encre text-white h-14 flex items-center px-4 gap-6 sticky top-0 z-30">
-        <span className="font-serif font-bold text-liboke text-lg">Nathy Food</span>
+        <div className="bg-kwanga rounded-lg p-1">
+          <img src="/Logo_ChezYaNathy.png" alt="Chez ya Nathy" className="h-8 w-auto" />
+        </div>
         <nav className="flex gap-4 text-sm">
           <a href="/admin"          className="text-white/70 hover:text-white transition-colors">Commandes</a>
           <a href="/admin/plats"    className="text-white/70 hover:text-white transition-colors">Plats</a>

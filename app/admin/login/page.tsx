@@ -40,7 +40,7 @@ export default function AdminLoginPage({
       <div className="w-full max-w-sm space-y-6">
         {/* Logo */}
         <div className="text-center">
-          <h1 className="font-serif text-3xl font-bold text-encre">Nathy Food</h1>
+          <img src="/Logo_ChezYaNathy.png" alt="Chez ya Nathy" className="h-20 w-auto mx-auto" />
           <p className="text-encre/50 text-sm mt-1">Espace cuisine</p>
         </div>
 

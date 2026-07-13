@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Loader2, MapPin, ShoppingBag, Truck, UtensilsCrossed } from "lucide-react"
+import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, ShoppingBag, Truck, UtensilsCrossed } from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { createClient } from "@/lib/supabase/client"
 import { formatPrice, formatDateLong, formatTimeRange } from "@/lib/utils"
@@ -132,6 +132,9 @@ export function OrderForm() {
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [errors2, setErrors2] = useState<Record<string, string>>({})
 
+  // ── Étape 3 ───────────────────────────────────────────────────
+  const [paymentMethod, setPaymentMethod] = useState<"carte" | "especes">("carte")
+
   // ─── Totaux ───────────────────────────────────────────────────
   const subtotal     = items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
   const deliveryFee  = type === "livraison" ? (zone?.fee_cents ?? 0) : 0
@@ -239,6 +242,7 @@ export function OrderForm() {
           postalCode: type === "livraison" ? postalCode : undefined,
           address:    type === "livraison" ? address    : undefined,
           slotId:     type === "livraison" ? selectedSlotId ?? undefined : undefined,
+          paymentMethod,
         }),
       })
 
@@ -248,7 +252,7 @@ export function OrderForm() {
         setSubmitting(false)
         return
       }
-      // Redirection vers Stripe Checkout
+      // Redirection vers Stripe Checkout (carte) ou directement la confirmation (espèces)
       window.location.href = data.url
     } catch {
       setGlobalError("Impossible de contacter le serveur. Réessayez.")
@@ -417,19 +421,58 @@ export function OrderForm() {
               </div>
             </div>
 
+            {/* Mode de paiement */}
+            <div className="bg-white rounded-2xl p-4 space-y-3">
+              <p className="text-sm font-semibold text-encre">Mode de paiement</p>
+              <div className="grid grid-cols-2 gap-3">
+                {(["carte", "especes"] as const).map((m) => {
+                  const Icon = m === "carte" ? CreditCard : Banknote
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPaymentMethod(m)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 py-4 rounded-2xl border-2 font-semibold text-sm transition-all",
+                        paymentMethod === m
+                          ? "border-liboke bg-liboke/8 text-liboke"
+                          : "border-encre/15 text-encre/60 hover:border-encre/30 bg-white"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {m === "carte" ? "Carte bancaire" : "Espèces"}
+                    </button>
+                  )
+                })}
+              </div>
+              {paymentMethod === "especes" && (
+                <p className="text-xs text-encre/50">
+                  {type === "livraison"
+                    ? "À régler en espèces auprès du livreur."
+                    : "À régler en espèces au retrait."
+                  }
+                </p>
+              )}
+            </div>
+
             {globalError && (
               <p className="text-sm text-pili bg-pili/8 rounded-xl px-4 py-3">{globalError}</p>
             )}
 
             <Button size="lg" className="w-full" onClick={handlePay} disabled={submitting}>
               {submitting
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Redirection Stripe…</>
-                : <>Payer {formatPrice(total)} →</>
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> {paymentMethod === "carte" ? "Redirection Stripe…" : "Envoi de la commande…"}</>
+                : paymentMethod === "carte"
+                  ? <>Payer {formatPrice(total)} →</>
+                  : <>Confirmer la commande — {formatPrice(total)} →</>
               }
             </Button>
 
             <p className="text-xs text-encre/40 text-center">
-              Paiement sécurisé par Stripe. Vos données bancaires ne transitent pas par nos serveurs.
+              {paymentMethod === "carte"
+                ? "Paiement sécurisé par Stripe. Vos données bancaires ne transitent pas par nos serveurs."
+                : "Réglez directement en espèces à la réception de votre commande."
+              }
             </p>
           </div>
         )}
