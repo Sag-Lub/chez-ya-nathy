@@ -44,12 +44,9 @@ export function HomeHero() {
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-liboke mb-5">
           Mbote&nbsp;! Bienvenue chez ya Nathy
         </p>
-        <h1 className="font-serif text-[42px] sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] text-balance mb-6">
-          La cuisine congolaise, sublimée avec élégance
-        </h1>
-        <p className="text-sm sm:text-base text-encre/75 leading-relaxed max-w-md mx-auto mb-9">
+        <h1 className="font-serif text-[42px] sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] text-balance mb-9">
           Une cuisine congolaise généreuse, faite maison.
-        </p>
+        </h1>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
           <Link
             href="/commande"
