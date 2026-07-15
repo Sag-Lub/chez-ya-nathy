@@ -50,9 +50,9 @@ async function seed() {
   const dishes = await rest('POST', '/dishes', [
     {
       category_id:        platsId,
-      name:               'Poulet à la moambe',
+      name:               "Poulet à la sauce d'arachide",
       slug:               'poulet-moambe',
-      description:        "Mijoté doucement dans la sauce à la noix de palme avec légumes frais et épices maison. La recette de famille de Nathy, transmise depuis Kinshasa.",
+      description:        "Poulet mijoté dans une sauce onctueuse à base d'arachides, préparé avec soin et servi avec l'accompagnement de votre choix.",
       price_cents:        1350,
       region:             'Kinshasa',
       is_available:       true,
