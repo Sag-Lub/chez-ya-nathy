@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { ArrowRight, CalendarDays, Flame } from "lucide-react"
-import { formatPrice, cn, isWeekendOnly } from "@/lib/utils"
+import { formatPrice, cn, isWeekendOnly, culinaryOriginLabel } from "@/lib/utils"
 import type { Dish } from "@/lib/types"
 
 interface DishCardProps {
@@ -16,6 +16,7 @@ interface DishCardProps {
 export function DishCard({ dish }: DishCardProps) {
   const weekend = isWeekendOnly(dish.available_days)
   const isPng   = dish.image_url?.endsWith(".png")
+  const origin  = culinaryOriginLabel(dish.culinary_origin)
 
   return (
     <Link
@@ -61,8 +62,13 @@ export function DishCard({ dish }: DishCardProps) {
       {/* Contenu */}
       <div className="p-4.5">
         {/* Badges */}
-        {(dish.region || weekend || dish.spice_customizable) && (
+        {(origin || dish.region || weekend || dish.spice_customizable) && (
           <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+            {origin && (
+              <span className="inline-block border border-encre/20 text-encre/55 text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded">
+                {origin}
+              </span>
+            )}
             {dish.region && (
               <span className="inline-block border border-safou/40 text-safou text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded">
                 {dish.region}

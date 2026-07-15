@@ -64,3 +64,10 @@ export function isWeekendOnly(availableDays: number[] | null): boolean {
   const set = new Set(availableDays)
   return set.size <= 2 && set.has(0) && set.has(6)
 }
+
+/** Libellé du badge d'univers culinaire — null si le plat n'est pas classé. */
+export function culinaryOriginLabel(origin: "congolese" | "african_selection" | null): string | null {
+  if (origin === "congolese") return "Spécialité congolaise"
+  if (origin === "african_selection") return "Saveur africaine"
+  return null
+}

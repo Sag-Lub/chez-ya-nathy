@@ -6,6 +6,12 @@ export type OrderStatus = 'recue' | 'confirmee' | 'en_cuisine' | 'en_livraison' 
 export type OrderType = 'livraison' | 'emporter'
 export type PaymentMethod = 'carte' | 'especes'
 
+/**
+ * Univers culinaire d'un plat — indépendant de sa disponibilité (week-end/tous les jours).
+ * null = non classé (ex. accompagnements/boissons neutres, ou plat en attente de confirmation).
+ */
+export type CulinaryOrigin = 'congolese' | 'african_selection'
+
 export type Category = {
   id: string
   name: string
@@ -35,6 +41,8 @@ export type Dish = {
   spice_customizable: boolean
   lead_time_hours: number
   available_days: number[] | null
+  culinary_origin: CulinaryOrigin | null
+  is_featured: boolean
   sort_order: number
   created_at: string
   dish_options?: DishOption[]

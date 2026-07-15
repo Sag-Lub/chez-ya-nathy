@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, CalendarDays, Flame, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useCartStore } from "@/store/cart"
-import { formatPrice, cn, dishImageClass, isWeekendOnly } from "@/lib/utils"
+import { formatPrice, cn, dishImageClass, isWeekendOnly, culinaryOriginLabel } from "@/lib/utils"
 import { getNextAvailableWeekendDate, formatWeekendDate } from "@/lib/preorder"
 import { Button } from "@/components/ui/Button"
 import type { Dish, SpiceLevel, Story } from "@/lib/types"
@@ -131,6 +131,11 @@ export function DishDetailClient({ dish }: Props) {
         {/* Titre + région — centrés */}
         <div className="mb-4 text-center">
           <div className="flex items-center justify-center gap-1.5 flex-wrap mb-2">
+            {culinaryOriginLabel(dish.culinary_origin) && (
+              <span className="inline-block bg-encre/10 text-encre/65 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                {culinaryOriginLabel(dish.culinary_origin)}
+              </span>
+            )}
             {dish.region && (
               <span className="inline-block bg-safou text-encre text-[10px] font-bold px-2.5 py-1 rounded-full">
                 {dish.region}
