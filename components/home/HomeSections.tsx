@@ -2,8 +2,6 @@
 
 import Link from "next/link"
 import { ArrowRight, ChevronDown } from "lucide-react"
-import { formatPrice } from "@/lib/utils"
-import type { Dish } from "@/lib/types"
 
 /* ─────────────────────────────────────────────────────────────────
    Primitives éditoriales partagées
@@ -27,7 +25,7 @@ function scrollTo(href: string) {
 
 export function HomeHero() {
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[76svh] flex items-center justify-center overflow-hidden py-24">
       {/* Image de fond */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -65,68 +63,12 @@ export function HomeHero() {
 
       {/* Indicateur de scroll */}
       <button
-        onClick={() => scrollTo("#incontournables")}
-        aria-label="Faire défiler vers le contenu"
+        onClick={() => scrollTo("#carte")}
+        aria-label="Faire défiler vers la carte"
         className="absolute bottom-7 left-1/2 -translate-x-1/2 z-10 text-white/50 hover:text-white transition-colors"
       >
         <ChevronDown className="h-6 w-6" />
       </button>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   Plats à l'honneur — « Les spécialités de Nathy »
-───────────────────────────────────────────────────────────────── */
-
-export function FeaturedDishes({ dishes }: { dishes: Dish[] }) {
-  if (dishes.length === 0) return null
-
-  return (
-    <section
-      id="incontournables"
-      aria-labelledby="incontournables-titre"
-      className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(72px,10vw,140px)] scroll-mt-16"
-    >
-      <SectionLabel>Les incontournables</SectionLabel>
-      <h2 id="incontournables-titre" className="font-serif text-3xl lg:text-5xl font-extrabold text-white leading-tight mb-10 lg:mb-14">
-        Les spécialités de Nathy
-      </h2>
-
-      <div className="flex lg:grid lg:grid-cols-3 gap-5 lg:gap-8 overflow-x-auto lg:overflow-visible scrollbar-none -mx-5 px-5 lg:mx-0 lg:px-0 snap-x snap-mandatory">
-        {dishes.slice(0, 3).map(dish => (
-          <Link
-            key={dish.id}
-            href={`/plat/${dish.slug}`}
-            className="group shrink-0 w-[78vw] sm:w-96 lg:w-auto snap-start"
-          >
-            <div className="relative aspect-[4/5] rounded-xl overflow-hidden border border-encre/8">
-              {dish.image_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={dish.image_url}
-                  alt={dish.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                />
-              ) : (
-                <div className="h-full w-full bg-carte" />
-              )}
-              <span className="absolute top-4 right-4 bg-liboke text-white text-xs font-bold px-3 py-1.5 rounded-md tabular-nums">
-                {formatPrice(dish.price_cents)}
-              </span>
-            </div>
-            <h3 className="font-serif text-xl font-bold text-white mt-5 mb-1.5">{dish.name}</h3>
-            <p className="text-sm text-encre/55 leading-relaxed line-clamp-2 mb-3">
-              {dish.description}
-            </p>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-liboke">
-              Voir le détail
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-            </span>
-          </Link>
-        ))}
-      </div>
     </section>
   )
 }
@@ -142,7 +84,7 @@ export function StorySection() {
       aria-labelledby="histoire-titre"
       className="bg-[#120a0c] scroll-mt-16"
     >
-      <div className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(72px,10vw,140px)] grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+      <div className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(56px,7vw,96px)] grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
         <div className="relative aspect-[4/3] lg:aspect-[5/6] rounded-xl overflow-hidden border border-encre/8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -183,7 +125,7 @@ export function PreorderSection() {
       aria-labelledby="precommandes-titre"
       className="scroll-mt-16"
     >
-      <div className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(72px,10vw,140px)] grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+      <div className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(56px,7vw,96px)] grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
         <div className="lg:order-2 relative aspect-[4/3] lg:aspect-[5/6] rounded-xl overflow-hidden border border-encre/8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

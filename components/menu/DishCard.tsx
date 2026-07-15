@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, CalendarDays, Flame } from "lucide-react"
+import { ArrowRight, CalendarDays } from "lucide-react"
 import { formatPrice, cn, isWeekendOnly, culinaryOriginLabel } from "@/lib/utils"
 import type { Dish } from "@/lib/types"
 
@@ -10,8 +10,9 @@ interface DishCardProps {
 }
 
 /**
- * Carte produit premium — image dominante, badge prix framboise,
- * badges de disponibilité, CTA texte uppercase.
+ * Carte produit simplifiée — photo, badge d'origine, nom, une ligne de
+ * description, prix, disponibilité, CTA. Le détail (piquant, région,
+ * accompagnements, suppléments) vit sur la fiche produit.
  */
 export function DishCard({ dish }: DishCardProps) {
   const weekend = isWeekendOnly(dish.available_days)
@@ -61,50 +62,35 @@ export function DishCard({ dish }: DishCardProps) {
 
       {/* Contenu */}
       <div className="p-4.5">
-        {/* Badges */}
-        {(origin || dish.region || weekend || dish.spice_customizable) && (
-          <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
-            {origin && (
-              <span className="inline-block border border-encre/20 text-encre/55 text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded">
-                {origin}
-              </span>
-            )}
-            {dish.region && (
-              <span className="inline-block border border-safou/40 text-safou text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded">
-                {dish.region}
-              </span>
-            )}
-            {weekend && (
-              <span className="inline-flex items-center gap-1 border border-liboke/40 text-liboke text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded">
-                <CalendarDays className="h-2.5 w-2.5" />
-                Week-end sur précommande
-              </span>
-            )}
-            {dish.spice_customizable && (
-              <span className="inline-flex items-center text-pili" title="Niveau de piquant personnalisable">
-                <Flame className="h-3 w-3" />
-              </span>
-            )}
-          </div>
+        {/* Badge d'origine */}
+        {origin && (
+          <span className="inline-block border border-encre/20 text-encre/55 text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded mb-2.5">
+            {origin}
+          </span>
         )}
 
-        {/* Nom + sous-titre */}
+        {/* Nom */}
         <h3 className="font-serif font-bold text-white text-[17px] leading-snug group-hover:text-liboke transition-colors">
           {dish.name}
         </h3>
-        {dish.subtitle && (
-          <p className="text-[11px] font-medium text-encre/45 mt-0.5">{dish.subtitle}</p>
-        )}
 
-        {/* Description */}
-        <p className="text-[13px] text-encre/50 line-clamp-2 mt-2 mb-4 leading-relaxed">
-          {dish.description}
+        {/* Description — une ligne maximum */}
+        <p className="text-[13px] text-encre/50 line-clamp-1 mt-1.5 mb-4 leading-relaxed">
+          {dish.subtitle ?? dish.description}
         </p>
+
+        {/* Disponibilité */}
+        {weekend && (
+          <span className="inline-flex items-center gap-1 border border-liboke/40 text-liboke text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded mb-3">
+            <CalendarDays className="h-2.5 w-2.5" aria-hidden />
+            Week-end sur précommande
+          </span>
+        )}
 
         {/* CTA */}
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+            "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em]",
             dish.is_available ? "text-liboke" : "text-encre/35"
           )}
         >
