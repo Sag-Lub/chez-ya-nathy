@@ -42,22 +42,21 @@ export function HomeHero() {
       {/* Contenu */}
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto animate-fade-up">
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-liboke mb-5">
-          Bienvenue chez ya Nathy
+          Mbote&nbsp;! Bienvenue chez ya Nathy
         </p>
         <h1 className="font-serif text-[42px] sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] text-balance mb-6">
           La cuisine congolaise, sublimée avec élégance
         </h1>
-        <p className="text-sm sm:text-base text-encre/75 leading-relaxed max-w-xl mx-auto mb-9">
-          Découvrez une cuisine congolaise généreuse et raffinée, préparée avec
-          soin à partir de recettes familiales et de spécialités africaines.
+        <p className="text-sm sm:text-base text-encre/75 leading-relaxed max-w-md mx-auto mb-9">
+          Une cuisine congolaise généreuse, faite maison.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <button
-            onClick={() => scrollTo("#carte")}
-            className="w-full sm:w-auto bg-liboke text-white text-xs font-bold uppercase tracking-[0.14em] px-8 h-13 rounded-lg hover:bg-[#ff3a60] transition-colors"
+          <Link
+            href="/commande"
+            className="w-full sm:w-auto bg-liboke text-white text-xs font-bold uppercase tracking-[0.14em] px-8 h-13 rounded-lg hover:bg-[#ff3a60] transition-colors inline-flex items-center justify-center"
           >
             Commander maintenant
-          </button>
+          </Link>
           <button
             onClick={() => scrollTo("#carte")}
             className="w-full sm:w-auto bg-transparent border border-white/25 text-white text-xs font-bold uppercase tracking-[0.14em] px-8 h-13 rounded-lg hover:bg-white/10 transition-colors"
