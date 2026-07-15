@@ -10,7 +10,6 @@ import {
   FeaturedDishes,
   StorySection,
   PreorderSection,
-  HowToOrder,
   SiteFooter,
   SectionLabel,
 } from "@/components/home/HomeSections"
@@ -121,8 +120,6 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
       </section>
 
       <PreorderSection />
-
-      <HowToOrder />
 
       <SiteFooter />
     </div>

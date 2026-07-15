@@ -8,10 +8,9 @@ import { CartSheet } from "@/components/cart/CartSheet"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
-  { href: "#carte",             label: "La carte" },
-  { href: "#histoire",          label: "Notre histoire" },
-  { href: "#precommandes",      label: "Précommandes" },
-  { href: "#comment-commander", label: "Comment commander" },
+  { href: "#carte",        label: "La carte" },
+  { href: "#histoire",     label: "Notre histoire" },
+  { href: "#precommandes", label: "Précommandes" },
 ]
 
 /**

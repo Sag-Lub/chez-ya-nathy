@@ -233,46 +233,6 @@ export function PreorderSection() {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Comment commander — 4 étapes numérotées
-───────────────────────────────────────────────────────────────── */
-
-const ORDER_STEPS = [
-  { num: "01", title: "Choisissez vos plats",              text: "Parcourez la carte et laissez-vous guider par vos envies." },
-  { num: "02", title: "Personnalisez votre commande",      text: "Accompagnements, niveau de piquant, quantités et remarques." },
-  { num: "03", title: "Sélectionnez la date et le créneau", text: "Commandez pour aujourd'hui ou précommandez pour le week-end." },
-  { num: "04", title: "Livraison ou retrait",              text: "Recevez votre commande ou récupérez-la au moment choisi." },
-]
-
-export function HowToOrder() {
-  return (
-    <section
-      id="comment-commander"
-      aria-labelledby="commander-titre"
-      className="bg-[#120a0c] scroll-mt-16"
-    >
-      <div className="max-w-[1440px] mx-auto px-5 lg:px-20 py-[clamp(72px,10vw,140px)]">
-        <SectionLabel>Commander</SectionLabel>
-        <h2 id="commander-titre" className="font-serif text-3xl lg:text-5xl font-extrabold text-white leading-tight mb-12 lg:mb-16">
-          Comment commander&nbsp;?
-        </h2>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-12">
-          {ORDER_STEPS.map(step => (
-            <div key={step.num} className="border-t border-encre/12 pt-6">
-              <p className="font-serif text-4xl font-extrabold text-liboke/70 tabular-nums mb-4">
-                {step.num}
-              </p>
-              <h3 className="font-bold text-white text-base mb-2">{step.title}</h3>
-              <p className="text-sm text-encre/55 leading-relaxed">{step.text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────
    Footer
 ───────────────────────────────────────────────────────────────── */
 
@@ -296,10 +256,9 @@ export function SiteFooter() {
             </p>
             <ul className="space-y-2.5">
               {[
-                { href: "#carte",             label: "La carte" },
-                { href: "#histoire",          label: "Notre histoire" },
-                { href: "#precommandes",      label: "Précommandes" },
-                { href: "#comment-commander", label: "Comment commander" },
+                { href: "#carte",        label: "La carte" },
+                { href: "#histoire",     label: "Notre histoire" },
+                { href: "#precommandes", label: "Précommandes" },
               ].map(link => (
                 <li key={link.href}>
                   <button
