@@ -1,24 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette charte Nathy Food */
-  --color-liboke:  #E2572B;
+  /* ── Palette sombre premium — Chez ya Nathy ──────────────────
+     liboke  : accent framboise (CTA, prix, liens)
+     safou   : or — touches limitées (badges région)
+     pili    : alerte / précommande (rouge doux lisible sur sombre)
+     feuille : succès
+     kwanga  : fond de page (noir brun profond)
+     encre   : texte principal (blanc chaud) — les /10 /15 servent
+               de bordures subtiles claires sur fond sombre
+     carte   : surface des cartes et panneaux                      */
+  --color-liboke:  #f52e53;
   --color-safou:   #F4A93B;
-  --color-pili:    #B23A2E;
-  --color-feuille: #4F7A4A;
-  --color-kwanga:  #FAF3E8;
-  --color-encre:   #2B1B12;
+  --color-pili:    #ff8f85;
+  --color-feuille: #7fbf77;
+  --color-kwanga:  #0b0708;
+  --color-encre:   #f2ebe8;
+  --color-carte:   #160c0e;
+  --color-carte2:  #211316;
 
   /* Typographie */
   --font-sans:   var(--font-inter);
-  --font-serif:  var(--font-fraunces);
+  --font-serif:  var(--font-display);
 }
 
-/* Tokens verre — utilisés uniquement sur les éléments flottants */
+/* Tokens verre — éléments flottants (nav, panier, barres d'action) */
 :root {
-  --glass-bg:       rgba(250, 243, 232, 0.75);
-  --glass-border:   rgba(255, 255, 255, 0.4);
-  --glass-bg-dark:  rgba(43, 27, 18, 0.70);
+  --glass-bg:       rgba(15, 9, 11, 0.78);
+  --glass-border:   rgba(255, 255, 255, 0.10);
+  --glass-bg-dark:  rgba(5, 2, 3, 0.72);
+
+  --overlay-hero:   rgba(7, 3, 4, 0.62);
 }
 
 body {
@@ -29,25 +41,38 @@ body {
 /* Utilitaires verre — barre action fiche plat, CartSheet, icône panier */
 @utility glass {
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter:         blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter:         blur(24px) saturate(160%);
   border: 1px solid var(--glass-border);
 }
 @utility glass-sm {
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter:         blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter:         blur(12px) saturate(150%);
   border: 1px solid var(--glass-border);
 }
 @utility glass-footer {
-  background: rgba(250, 243, 232, 0.92);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter:         blur(24px) saturate(180%);
+  background: rgba(11, 7, 8, 0.90);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter:         blur(24px) saturate(160%);
   border-top: 1px solid var(--glass-border);
 }
 
 /* Fallback Safari ancien / WebView sans backdrop-filter */
 @supports not (backdrop-filter: blur(1px)) {
-  .glass, .glass-sm { background: rgba(250, 243, 232, 0.97); }
-  .glass-footer      { background: rgba(250, 243, 232, 0.98); }
+  .glass, .glass-sm { background: rgba(11, 7, 8, 0.97); }
+  .glass-footer      { background: rgba(11, 7, 8, 0.98); }
+}
+
+/* Animations sobres — respectent prefers-reduced-motion */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@utility animate-fade-up {
+  animation: fade-up 0.7s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none; }
+  * { transition-duration: 0.01ms !important; }
 }

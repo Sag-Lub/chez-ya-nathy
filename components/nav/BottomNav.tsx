@@ -17,8 +17,9 @@ export function BottomNav() {
 
   const isHome = pathname === "/"
 
-  // Pages avec leur propre barre d'action fixe — la nav céderait la place
-  if (pathname.startsWith("/plat/") || pathname.startsWith("/commande")) {
+  // Pages avec leur propre barre d'action fixe — la nav céderait la place.
+  // L'accueil a désormais son header complet avec panier.
+  if (isHome || pathname.startsWith("/plat/") || pathname.startsWith("/commande")) {
     return null
   }
 
@@ -51,7 +52,7 @@ export function BottomNav() {
         >
           <ShoppingBag className="h-[18px] w-[18px]" />
           {mounted && totalItems() > 0 && (
-            <span className="absolute top-1.5 right-3 bg-pili text-kwanga text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center leading-none tabular-nums">
+            <span className="absolute top-1.5 right-3 bg-pili text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center leading-none tabular-nums">
               {totalItems() > 9 ? "9+" : totalItems()}
             </span>
           )}

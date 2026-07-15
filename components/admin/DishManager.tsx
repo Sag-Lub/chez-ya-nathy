@@ -55,7 +55,7 @@ export function DishManager({ initialDishes, initialCategories }: Props) {
                 <div
                   key={dish.id}
                   className={cn(
-                    "bg-white rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm border border-encre/8 transition-opacity",
+                    "bg-carte rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm border border-encre/8 transition-opacity",
                     !dish.is_available && "opacity-60"
                   )}
                 >

@@ -82,7 +82,7 @@ export function DishDetailClient({ dish }: Props) {
       <div className="relative max-w-lg mx-auto px-5 pt-4">
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-5 z-20 bg-white border border-encre/10 rounded-full p-2.5 shadow-sm transition-opacity hover:opacity-70"
+          className="absolute top-4 left-5 z-20 bg-carte border border-encre/10 rounded-full p-2.5 shadow-sm transition-opacity hover:opacity-70"
           aria-label="Retour"
         >
           <ArrowLeft className="h-5 w-5 text-encre" />
@@ -106,7 +106,7 @@ export function DishDetailClient({ dish }: Props) {
           </div>
 
           {/* Quantité — pill sous la photo */}
-          <div className="flex items-center gap-3 bg-white border border-encre/10 rounded-full px-2 py-1 -mt-5 relative z-10 shadow-[0_6px_16px_rgba(43,27,18,0.12)]">
+          <div className="flex items-center gap-3 bg-carte border border-encre/10 rounded-full px-2 py-1 -mt-5 relative z-10 shadow-[0_6px_16px_rgba(43,27,18,0.12)]">
             <button
               onClick={() => setQuantity(q => Math.max(1, q - 1))}
               className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-encre/8 transition-colors"
@@ -120,7 +120,7 @@ export function DishDetailClient({ dish }: Props) {
               className="h-9 w-9 flex items-center justify-center rounded-full bg-liboke hover:bg-liboke/90 transition-colors"
               aria-label="Augmenter"
             >
-              <Plus className="h-4 w-4 text-kwanga" />
+              <Plus className="h-4 w-4 text-white" />
             </button>
           </div>
         </div>
@@ -207,7 +207,7 @@ export function DishDetailClient({ dish }: Props) {
                 <RadioChip
                   key={opt.id}
                   label={opt.name}
-                  color="border-encre/20 text-encre bg-white"
+                  color="border-encre/20 text-encre bg-carte"
                   selected={selectedBase === opt.id}
                   onClick={() => setSelectedBase(opt.id)}
                 />
@@ -304,7 +304,7 @@ function RadioChip({
       onClick={onClick}
       className={cn(
         "w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all",
-        selected ? color : "border-encre/15 text-encre/60 bg-white hover:border-encre/30"
+        selected ? color : "border-encre/15 text-encre/60 bg-carte hover:border-encre/30"
       )}
     >
       {label}
@@ -330,7 +330,7 @@ function CheckChip({
         "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all",
         checked
           ? "border-safou bg-safou/10 text-encre"
-          : "border-encre/15 bg-white text-encre/60 hover:border-encre/30"
+          : "border-encre/15 bg-carte text-encre/60 hover:border-encre/30"
       )}
     >
       <span>{label}</span>

@@ -61,7 +61,7 @@ function InputField({
       </span>
       <input
         className={cn(
-          "w-full h-12 px-4 rounded-xl border-2 bg-white text-encre",
+          "w-full h-12 px-4 rounded-xl border-2 bg-carte text-encre",
           "focus:outline-none transition-colors",
           error ? "border-pili focus:border-pili" : "border-encre/15 focus:border-liboke"
         )}
@@ -92,7 +92,7 @@ function TypeToggle({
               "flex flex-col items-center gap-2 py-5 rounded-2xl border-2 font-semibold text-sm transition-all",
               value === t
                 ? "border-liboke bg-liboke/8 text-liboke"
-                : "border-encre/15 text-encre/60 hover:border-encre/30 bg-white"
+                : "border-encre/15 text-encre/60 hover:border-encre/30 bg-carte"
             )}
           >
             <Icon className="h-6 w-6" />
@@ -328,7 +328,7 @@ export function OrderForm() {
                       value={postalCode}
                       onChange={(e) => { setPostalCode(e.target.value); setZone(null); setZoneError(null) }}
                       placeholder="69007"
-                      className="flex-1 h-12 px-4 rounded-xl border-2 border-encre/15 bg-white text-encre focus:border-liboke focus:outline-none"
+                      className="flex-1 h-12 px-4 rounded-xl border-2 border-encre/15 bg-carte text-encre focus:border-liboke focus:outline-none"
                     />
                     <Button variant="secondary" onClick={checkZone} disabled={zoneLoading}>
                       {zoneLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vérifier"}
@@ -393,14 +393,14 @@ export function OrderForm() {
         {step === 3 && (
           <div className="space-y-4">
             {/* Infos client */}
-            <div className="bg-white rounded-2xl p-4 text-sm space-y-0.5">
+            <div className="bg-carte rounded-2xl p-4 text-sm space-y-0.5">
               <p className="font-semibold text-encre">{name}</p>
               <p className="text-encre/60">{phone}</p>
               {email && <p className="text-encre/60">{email}</p>}
             </div>
 
             {/* Livraison */}
-            <div className="bg-white rounded-2xl p-4 text-sm space-y-0.5">
+            <div className="bg-carte rounded-2xl p-4 text-sm space-y-0.5">
               <p className="font-semibold text-encre flex items-center gap-1.5">
                 {type === "livraison" ? <Truck className="h-4 w-4 text-liboke" /> : <UtensilsCrossed className="h-4 w-4 text-liboke" />}
                 {type === "livraison" ? "Livraison" : "À emporter"}
@@ -419,7 +419,7 @@ export function OrderForm() {
             </div>
 
             {/* Panier */}
-            <div className="bg-white rounded-2xl p-4 space-y-2">
+            <div className="bg-carte rounded-2xl p-4 space-y-2">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="text-encre">
@@ -446,7 +446,7 @@ export function OrderForm() {
             </div>
 
             {/* Remarques */}
-            <label className="block bg-white rounded-2xl p-4">
+            <label className="block bg-carte rounded-2xl p-4">
               <span className="text-sm font-semibold text-encre mb-1.5 flex items-center gap-1">
                 Une remarque pour Nathy ?
                 <span className="text-encre/40 text-xs font-normal">(facultatif)</span>
@@ -462,7 +462,7 @@ export function OrderForm() {
             </label>
 
             {/* Mode de paiement */}
-            <div className="bg-white rounded-2xl p-4 space-y-3">
+            <div className="bg-carte rounded-2xl p-4 space-y-3">
               <p className="text-sm font-semibold text-encre">Mode de paiement</p>
               <div className="grid grid-cols-2 gap-3">
                 {(["carte", "especes"] as const).map((m) => {
@@ -476,7 +476,7 @@ export function OrderForm() {
                         "flex flex-col items-center gap-2 py-4 rounded-2xl border-2 font-semibold text-sm transition-all",
                         paymentMethod === m
                           ? "border-liboke bg-liboke/8 text-liboke"
-                          : "border-encre/15 text-encre/60 hover:border-encre/30 bg-white"
+                          : "border-encre/15 text-encre/60 hover:border-encre/30 bg-carte"
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -561,17 +561,17 @@ function SlotPicker({
               className={cn(
                 "shrink-0 w-16 py-2.5 rounded-2xl border-2 flex flex-col items-center gap-0.5 transition-all",
                 active
-                  ? "border-liboke bg-liboke text-kwanga shadow-[0_6px_16px_rgba(226,87,43,0.3)]"
-                  : "border-encre/12 bg-white text-encre hover:border-encre/30"
+                  ? "border-liboke bg-liboke text-white shadow-[0_6px_16px_rgba(226,87,43,0.3)]"
+                  : "border-encre/12 bg-carte text-encre hover:border-encre/30"
               )}
             >
-              <span className={cn("text-[10px] font-semibold uppercase", active ? "text-kwanga/75" : "text-encre/45")}>
+              <span className={cn("text-[10px] font-semibold uppercase", active ? "text-white/75" : "text-encre/45")}>
                 {new Intl.DateTimeFormat("fr-FR", { weekday: "short" }).format(d).replace(".", "")}
               </span>
               <span className="text-lg font-bold leading-none tabular-nums">
                 {d.getDate()}
               </span>
-              <span className={cn("text-[10px] font-medium", active ? "text-kwanga/75" : "text-encre/45")}>
+              <span className={cn("text-[10px] font-medium", active ? "text-white/75" : "text-encre/45")}>
                 {new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d).replace(".", "")}
               </span>
               {/* Point : un créneau est choisi ce jour-là */}
@@ -598,7 +598,7 @@ function SlotPicker({
                 "py-3 px-3 rounded-xl border-2 text-sm font-medium transition-all text-center",
                 selectedId === slot.id
                   ? "border-liboke bg-liboke/8 text-liboke"
-                  : "border-encre/15 bg-white text-encre hover:border-encre/30"
+                  : "border-encre/15 bg-carte text-encre hover:border-encre/30"
               )}
             >
               {formatTimeRange(slot.start_time, slot.end_time)}

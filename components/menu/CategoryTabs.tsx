@@ -9,83 +9,57 @@ interface CategoryTabsProps {
   onChange:   (id: string | null) => void
 }
 
-/** Emoji par mot-clé du slug — fallback : initiale de la catégorie */
-function categoryEmoji(slug: string): string | null {
-  const map: [string, string][] = [
-    ["plat",      "🍲"],
-    ["mijote",    "🍲"],
-    ["grillade",  "🍖"],
-    ["poisson",   "🐟"],
-    ["poulet",    "🍗"],
-    ["accompagn", "🍚"],
-    ["entree",    "🥟"],
-    ["beignet",   "🥟"],
-    ["dessert",   "🍰"],
-    ["boisson",   "🥤"],
-    ["jus",       "🧃"],
-  ]
-  const s = slug.toLowerCase()
-  return map.find(([key]) => s.includes(key))?.[1] ?? null
-}
-
+/**
+ * Filtres de catégories — texte uppercase, élément actif souligné
+ * d'un trait framboise. Défilement horizontal sur mobile.
+ */
 export function CategoryTabs({ categories, activeId, onChange }: CategoryTabsProps) {
   return (
-    <div className="sticky top-20 z-30 bg-kwanga">
-      <div className="flex overflow-x-auto scrollbar-none px-4 py-3 gap-3 max-w-2xl mx-auto">
-        <Bubble
-          emoji="✨"
-          label="Tout"
-          active={activeId === null}
-          onClick={() => onChange(null)}
+    <div
+      role="tablist"
+      aria-label="Catégories de plats"
+      className="flex overflow-x-auto scrollbar-none gap-7 border-b border-encre/8"
+    >
+      <Tab label="Tout" active={activeId === null} onClick={() => onChange(null)} />
+      {categories.map(cat => (
+        <Tab
+          key={cat.id}
+          label={cat.name}
+          active={activeId === cat.id}
+          onClick={() => onChange(cat.id)}
         />
-        {categories.map(cat => (
-          <Bubble
-            key={cat.id}
-            emoji={categoryEmoji(cat.slug) ?? cat.name.charAt(0).toUpperCase()}
-            label={cat.name}
-            active={activeId === cat.id}
-            onClick={() => onChange(cat.id)}
-          />
-        ))}
-      </div>
+      ))}
     </div>
   )
 }
 
-function Bubble({
-  emoji,
+function Tab({
   label,
   active,
   onClick,
 }: {
-  emoji: string
   label: string
   active: boolean
   onClick: () => void
 }) {
   return (
     <button
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
-      className="shrink-0 flex flex-col items-center gap-1.5 min-w-16"
+      className={cn(
+        "relative shrink-0 pb-3.5 text-[11px] font-bold uppercase tracking-[0.14em] whitespace-nowrap transition-colors",
+        active ? "text-liboke" : "text-encre/50 hover:text-encre"
+      )}
     >
+      {label}
       <span
+        aria-hidden
         className={cn(
-          "h-14 w-14 rounded-full flex items-center justify-center text-xl transition-all",
-          active
-            ? "bg-liboke shadow-[0_6px_16px_rgba(226,87,43,0.35)] scale-105"
-            : "bg-white border border-encre/10"
+          "absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-opacity",
+          active ? "bg-liboke opacity-100" : "opacity-0"
         )}
-      >
-        {emoji}
-      </span>
-      <span
-        className={cn(
-          "text-[11px] font-semibold whitespace-nowrap transition-colors",
-          active ? "text-liboke" : "text-encre/55"
-        )}
-      >
-        {label}
-      </span>
+      />
     </button>
   )
 }

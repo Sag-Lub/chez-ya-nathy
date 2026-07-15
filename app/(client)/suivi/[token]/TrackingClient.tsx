@@ -55,7 +55,7 @@ export function TrackingClient({ initialOrder, token }: Props) {
       <div className="max-w-lg mx-auto px-4 -mt-4 space-y-4 pb-12">
         {/* Timeline */}
         {!isCancelled && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="bg-carte rounded-2xl p-5 shadow-sm">
             <div className="space-y-5">
               {STEPS.map((step, i) => {
                 const isDone    = i <= currentIndex
@@ -94,7 +94,7 @@ export function TrackingClient({ initialOrder, token }: Props) {
         )}
 
         {/* Détails commande */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+        <div className="bg-carte rounded-2xl p-5 shadow-sm space-y-3">
           <h2 className="font-serif font-bold text-encre">Votre commande</h2>
           {order.order_items?.map((item) => (
             <div key={item.id} className="flex justify-between text-sm">
@@ -116,13 +116,13 @@ export function TrackingClient({ initialOrder, token }: Props) {
 
         {/* Infos livraison */}
         {order.type === "livraison" && order.address && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm text-sm space-y-1">
+          <div className="bg-carte rounded-2xl p-5 shadow-sm text-sm space-y-1">
             <p className="font-semibold text-encre">Livraison</p>
             <p className="text-encre/60">{order.address}, {order.postal_code}</p>
           </div>
         )}
         {order.type === "emporter" && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm text-sm">
+          <div className="bg-carte rounded-2xl p-5 shadow-sm text-sm">
             <p className="font-semibold text-encre">À emporter</p>
             <p className="text-encre/60">Nathy vous contactera pour la récupération.</p>
           </div>

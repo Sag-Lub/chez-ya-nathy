@@ -12,12 +12,12 @@ function IlloBol() {
     <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       {/* Bol */}
       <ellipse cx="80" cy="90" rx="54" ry="14" fill="#F4A93B" opacity=".35" />
-      <path d="M30 72 Q30 108 80 108 Q130 108 130 72 Z" fill="#E2572B" />
+      <path d="M30 72 Q30 108 80 108 Q130 108 130 72 Z" fill="#f52e53" />
       <ellipse cx="80" cy="72" rx="50" ry="14" fill="#F4A93B" />
       {/* Vapeur */}
-      <path d="M60 60 Q58 50 62 42 Q66 34 64 26" stroke="#E2572B" strokeWidth="3" strokeLinecap="round" opacity=".5" />
-      <path d="M80 56 Q78 44 82 36 Q86 28 84 18" stroke="#E2572B" strokeWidth="3" strokeLinecap="round" opacity=".5" />
-      <path d="M100 60 Q98 50 102 42 Q106 34 104 26" stroke="#E2572B" strokeWidth="3" strokeLinecap="round" opacity=".5" />
+      <path d="M60 60 Q58 50 62 42 Q66 34 64 26" stroke="#f52e53" strokeWidth="3" strokeLinecap="round" opacity=".5" />
+      <path d="M80 56 Q78 44 82 36 Q86 28 84 18" stroke="#f52e53" strokeWidth="3" strokeLinecap="round" opacity=".5" />
+      <path d="M100 60 Q98 50 102 42 Q106 34 104 26" stroke="#f52e53" strokeWidth="3" strokeLinecap="round" opacity=".5" />
     </svg>
   )
 }
@@ -29,14 +29,14 @@ function IlloPiment() {
       <path d="M70 30 Q68 20 72 16 Q76 12 78 18 Q82 28 80 50 Q78 72 68 88 Q58 100 52 96 Q44 90 48 76 Q54 58 70 30Z" fill="#B23A2E" />
       <path d="M70 30 Q66 48 62 66 Q58 80 54 88" stroke="#8B2020" strokeWidth="1.5" strokeLinecap="round" opacity=".4" />
       {/* Piment 2 – petit */}
-      <path d="M98 42 Q96 34 99 30 Q102 26 104 31 Q107 40 106 56 Q104 70 98 80 Q92 88 88 85 Q83 80 86 70 Q91 56 98 42Z" fill="#E2572B" />
+      <path d="M98 42 Q96 34 99 30 Q102 26 104 31 Q107 40 106 56 Q104 70 98 80 Q92 88 88 85 Q83 80 86 70 Q91 56 98 42Z" fill="#f52e53" />
       {/* Queue */}
       <path d="M72 18 Q75 10 80 8 Q85 6 86 10" stroke="#4F7A4A" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M99 31 Q101 24 104 22 Q107 20 108 23" stroke="#4F7A4A" strokeWidth="2" strokeLinecap="round" />
       {/* Petits points décoratifs */}
       <circle cx="40" cy="110" r="4" fill="#F4A93B" opacity=".5" />
       <circle cx="120" cy="100" r="6" fill="#F4A93B" opacity=".3" />
-      <circle cx="130" cy="50" r="3" fill="#E2572B" opacity=".3" />
+      <circle cx="130" cy="50" r="3" fill="#f52e53" opacity=".3" />
     </svg>
   )
 }
@@ -45,26 +45,26 @@ function IlloScooter() {
   return (
     <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       {/* Corps scooter */}
-      <path d="M50 80 L60 58 L90 56 L110 64 L118 80 Z" fill="#E2572B" />
+      <path d="M50 80 L60 58 L90 56 L110 64 L118 80 Z" fill="#f52e53" />
       {/* Guidon */}
       <path d="M108 64 L120 56 L124 60" stroke="#2B1B12" strokeWidth="2.5" strokeLinecap="round" />
       {/* Siège */}
       <rect x="62" y="52" width="30" height="8" rx="4" fill="#2B1B12" />
       {/* Roue arrière */}
       <circle cx="58" cy="88" r="14" fill="#2B1B12" />
-      <circle cx="58" cy="88" r="8" fill="#FAF3E8" />
+      <circle cx="58" cy="88" r="8" fill="#1a0f12" />
       <circle cx="58" cy="88" r="3" fill="#2B1B12" />
       {/* Roue avant */}
       <circle cx="114" cy="88" r="14" fill="#2B1B12" />
-      <circle cx="114" cy="88" r="8" fill="#FAF3E8" />
+      <circle cx="114" cy="88" r="8" fill="#1a0f12" />
       <circle cx="114" cy="88" r="3" fill="#2B1B12" />
       {/* Boîte de livraison */}
       <rect x="60" y="56" width="28" height="20" rx="4" fill="#F4A93B" />
-      <path d="M60 66 L88 66" stroke="#E2572B" strokeWidth="1.5" />
+      <path d="M60 66 L88 66" stroke="#f52e53" strokeWidth="1.5" />
       {/* Lignes de vitesse */}
-      <path d="M30 76 L46 76" stroke="#E2572B" strokeWidth="2.5" strokeLinecap="round" opacity=".5" />
-      <path d="M24 84 L44 84" stroke="#E2572B" strokeWidth="2" strokeLinecap="round" opacity=".35" />
-      <path d="M28 92 L46 92" stroke="#E2572B" strokeWidth="1.5" strokeLinecap="round" opacity=".25" />
+      <path d="M30 76 L46 76" stroke="#f52e53" strokeWidth="2.5" strokeLinecap="round" opacity=".5" />
+      <path d="M24 84 L44 84" stroke="#f52e53" strokeWidth="2" strokeLinecap="round" opacity=".35" />
+      <path d="M28 92 L46 92" stroke="#f52e53" strokeWidth="1.5" strokeLinecap="round" opacity=".25" />
     </svg>
   )
 }
@@ -154,7 +154,7 @@ function WelcomeScreen({ onTap }: { onTap: () => void }) {
           alt="Chez ya Nathy"
           className="w-56 h-auto drop-shadow-lg"
         />
-        <p className="mt-2 text-kwanga/70 text-base font-medium">
+        <p className="mt-2 text-white/70 text-base font-medium">
           La cuisine congolaise, livrée avec cœur
         </p>
       </div>
@@ -165,7 +165,7 @@ function WelcomeScreen({ onTap }: { onTap: () => void }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kwanga opacity-60" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-kwanga/80" />
         </span>
-        <span className="text-kwanga/50 text-xs">Appuyez pour continuer</span>
+        <span className="text-white/50 text-xs">Appuyez pour continuer</span>
       </div>
     </button>
   )
@@ -256,14 +256,14 @@ function SlidesScreen({
         {isLast ? (
           <button
             onClick={onDone}
-            className="w-full max-w-xs bg-liboke text-kwanga font-bold text-base py-4 rounded-full active:scale-[.97] transition-all"
+            className="w-full max-w-xs bg-liboke text-white font-bold text-base py-4 rounded-full active:scale-[.97] transition-all"
           >
             Commencer
           </button>
         ) : (
           <button
             onClick={() => setSlide(slide + 1)}
-            className="w-full max-w-xs bg-encre text-kwanga font-semibold text-sm py-3.5 rounded-full active:scale-[.97] transition-all"
+            className="w-full max-w-xs bg-encre text-white font-semibold text-sm py-3.5 rounded-full active:scale-[.97] transition-all"
           >
             Suivant
           </button>

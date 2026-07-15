@@ -25,7 +25,7 @@ export function CartItem({ item }: { item: CartItemType }) {
   return (
     <div className="flex items-center gap-3">
       {/* Vignette ronde */}
-      <div className="relative h-14 w-14 shrink-0 rounded-full overflow-hidden ring-2 ring-white shadow-sm">
+      <div className="relative h-14 w-14 shrink-0 rounded-full overflow-hidden ring-2 ring-encre/15 shadow-sm">
         {item.imageUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img

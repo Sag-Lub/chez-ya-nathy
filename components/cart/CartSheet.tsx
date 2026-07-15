@@ -89,7 +89,7 @@ export function CartSheet({ isOpen, onClose }: CartSheetProps) {
         {items.length > 0 && (
           <div
             className="px-5 py-5 space-y-4 border-t border-white/20"
-            style={{ background: "rgba(250, 243, 232, 0.92)" }}
+            style={{ background: "rgba(11, 7, 8, 0.94)" }}
           >
             <div className="flex items-center justify-between text-encre">
               <span className="font-semibold">Total</span>

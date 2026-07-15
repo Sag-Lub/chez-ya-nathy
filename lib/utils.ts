@@ -18,7 +18,7 @@ export function formatPrice(cents: number): string {
  */
 export function dishImageClass(url: string): string {
   return url.endsWith(".png")
-    ? "h-full w-full object-contain p-3 bg-white"
+    ? "h-full w-full object-contain p-3 bg-carte2"
     : "h-full w-full object-cover"
 }
 

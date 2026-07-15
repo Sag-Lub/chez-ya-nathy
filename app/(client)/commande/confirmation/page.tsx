@@ -92,7 +92,7 @@ function ConfirmationContent() {
       </div>
 
       {/* Articles */}
-      <div className="bg-white rounded-2xl p-4 space-y-2 w-full">
+      <div className="bg-carte rounded-2xl p-4 space-y-2 w-full">
         {order.order_items?.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
             <span className="text-encre">

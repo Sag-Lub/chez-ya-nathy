@@ -149,7 +149,7 @@ function OrderCard({
 
   return (
     <div className={cn(
-      "bg-white rounded-2xl p-4 shadow-sm border transition-opacity",
+      "bg-carte rounded-2xl p-4 shadow-sm border transition-opacity",
       archived ? "opacity-50 border-transparent" : "border-encre/8"
     )}>
       {/* En-tête */}

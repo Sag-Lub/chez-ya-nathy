@@ -186,7 +186,7 @@ export function SlotManager({ initialSlots }: Props) {
   return (
     <div className="space-y-8">
       {/* ── Génération automatique en masse ─────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-liboke/20 space-y-4">
+      <div className="bg-carte rounded-2xl p-5 shadow-sm border border-liboke/20 space-y-4">
         <h2 className="font-semibold text-encre flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-liboke" />
           Générer des créneaux à l&apos;avance
@@ -282,7 +282,7 @@ export function SlotManager({ initialSlots }: Props) {
       </div>
 
       {/* ── Formulaire création manuelle ─────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-encre/8 space-y-4">
+      <div className="bg-carte rounded-2xl p-5 shadow-sm border border-encre/8 space-y-4">
         <h2 className="font-semibold text-encre">Ajouter un créneau ponctuel</h2>
 
         <label className="block">
@@ -360,7 +360,7 @@ export function SlotManager({ initialSlots }: Props) {
               <div className="space-y-2">
                 {daySlots.map((slot) => (
                   <div key={slot.id}
-                    className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 border border-encre/8">
+                    className="bg-carte rounded-xl px-4 py-3 flex items-center gap-3 border border-encre/8">
                     <div className="flex-1 text-sm">
                       <span className="font-medium text-encre">
                         {formatTimeRange(slot.start_time, slot.end_time)}

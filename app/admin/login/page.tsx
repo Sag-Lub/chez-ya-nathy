@@ -45,7 +45,7 @@ export default function AdminLoginPage({
         </div>
 
         {sent ? (
-          <div className="bg-white rounded-2xl p-6 text-center space-y-3 shadow-sm">
+          <div className="bg-carte rounded-2xl p-6 text-center space-y-3 shadow-sm">
             <div className="text-4xl">📧</div>
             <p className="font-semibold text-encre">Lien envoyé !</p>
             <p className="text-sm text-encre/60">
@@ -53,7 +53,7 @@ export default function AdminLoginPage({
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 space-y-4 shadow-sm">
+          <form onSubmit={handleSubmit} className="bg-carte rounded-2xl p-6 space-y-4 shadow-sm">
             <p className="text-sm text-encre/70 text-center">
               Un lien magique sera envoyé à<br />
               <strong className="text-encre">chezyanathy@gmail.com</strong>
