@@ -57,7 +57,7 @@ export function DishCard({ dish }: DishCardProps) {
           {isWeekendOnly(dish.available_days) && (
             <span className="inline-flex items-center gap-1 bg-pili/10 text-pili text-[10px] font-bold px-2.5 py-0.5 rounded-full">
               <CalendarDays className="h-2.5 w-2.5" />
-              Week-end uniquement
+              Week-end sur précommande
             </span>
           )}
         </div>

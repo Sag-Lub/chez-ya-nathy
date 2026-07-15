@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Search } from "lucide-react"
 import { CategoryTabs } from "./CategoryTabs"
 import { DishCard } from "./DishCard"
+import { HomeHero, HomeInfoSections } from "@/components/home/HomeSections"
 import { formatPrice, dishImageClass } from "@/lib/utils"
 import type { Category, Dish } from "@/lib/types"
 
@@ -28,10 +29,13 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
     ? dishes.filter(d => d.category_id === activeCategory)
     : dishes.filter(d => !hiddenFromAll.has(d.category_id))
 
-  // La recherche, elle, couvre tout le menu
-  const visibleDishes = query.trim()
+  // La recherche couvre tout le menu : nom, sous-titre et description
+  const q = query.trim().toLowerCase()
+  const visibleDishes = q
     ? (activeCategory ? byCategory : dishes).filter(d =>
-        d.name.toLowerCase().includes(query.trim().toLowerCase())
+        d.name.toLowerCase().includes(q) ||
+        (d.subtitle ?? "").toLowerCase().includes(q) ||
+        d.description.toLowerCase().includes(q)
       )
     : byCategory
 
@@ -55,12 +59,12 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
         </div>
       </header>
 
+      {/* ─── Hero d'accueil ─────────────────────────────────────── */}
+      <HomeHero />
+
       {/* ─── Accroche + recherche ───────────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-4 pt-6 pb-1">
-        <p className="text-xs font-bold text-liboke uppercase tracking-[0.18em] mb-2">
-          Mbote&nbsp;! 👋🏾
-        </p>
-        <h1 className="font-serif text-[30px] font-bold text-encre leading-[1.15] mb-5 text-balance">
+      <div id="carte" className="max-w-2xl mx-auto px-4 pt-6 pb-1 scroll-mt-20">
+        <h2 className="font-serif text-[26px] font-bold text-encre leading-[1.15] mb-5 text-balance">
           Une faim de{" "}
           <span className="relative inline-block italic text-liboke">
             chez&nbsp;nous
@@ -80,7 +84,7 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
             </svg>
           </span>
           &nbsp;?
-        </h1>
+        </h2>
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-encre/35" />
           <input
@@ -135,6 +139,9 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
           </div>
         )}
       </main>
+
+      {/* ─── Sections informatives ──────────────────────────────── */}
+      <HomeInfoSections />
     </div>
   )
 }

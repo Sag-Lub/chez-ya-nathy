@@ -3,11 +3,11 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripe } from "@/lib/stripe"
 import { sendOrderConfirmationEmail } from "@/lib/email"
-import { isDateAllowedForDish } from "@/lib/utils"
+import { canOrderDishForDate, isPreorderCutoffReached } from "@/lib/preorder"
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { cartItems, customer, type, postalCode, address, slotId, paymentMethod } = body as {
+  const { cartItems, customer, type, postalCode, address, slotId, paymentMethod, notes } = body as {
     cartItems: { dishId: string; quantity: number; spice?: string; selectedOptionIds?: string[]; displayName?: string }[]
     customer: { name: string; phone: string; email?: string }
     type: "livraison" | "emporter"
@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
     address?: string
     slotId?: string
     paymentMethod: "carte" | "especes"
+    notes?: string
   }
+
+  const safeNotes = typeof notes === "string" ? notes.slice(0, 500).trim() || null : null
 
   // ── Garde : clé Stripe configurée ? (uniquement pour le paiement carte) ─
   if (paymentMethod === "carte" && !process.env.STRIPE_SECRET_KEY) {
@@ -86,12 +89,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Créneau non disponible — choisissez-en un autre" }, { status: 409 })
     }
 
-    // Un plat réservé au week-end ne peut pas être livré un jour de semaine
+    // Un plat réservé au week-end ne peut pas être livré un jour de semaine,
+    // et la précommande doit respecter l'heure limite (vendredi/samedi 18h).
     for (const item of cartItems) {
       const dish = dishes.find((d) => d.id === item.dishId)
-      if (dish && !isDateAllowedForDish(slot.slot_date, dish.available_days)) {
+      if (dish && !canOrderDishForDate(dish.available_days, slot.slot_date)) {
+        const cutoffPassed = dish.available_days && isPreorderCutoffReached(slot.slot_date)
         return NextResponse.json(
-          { error: `${dish.name} n'est disponible que le week-end — choisissez un autre créneau` },
+          {
+            error: cutoffPassed
+              ? `Les précommandes pour cette date sont terminées pour ${dish.name} — choisissez une date de week-end suivante`
+              : `${dish.name} n'est disponible que le week-end — choisissez un autre créneau`,
+          },
           { status: 409 }
         )
       }
@@ -138,7 +147,7 @@ export async function POST(req: NextRequest) {
         subtotal_cents:     subtotalCents,
         delivery_fee_cents: deliveryFeeCents,
         total_cents:        subtotalCents + deliveryFeeCents,
-        notes:              null,
+        notes:              safeNotes,
         stripe_session_id:  null,
         stripe_payment_intent: null,
       })
@@ -231,6 +240,7 @@ export async function POST(req: NextRequest) {
       postal_code:        postalCode ?? "",
       delivery_fee_cents: String(deliveryFeeCents),
       subtotal_cents:     String(subtotalCents),
+      notes:              safeNotes ?? "",
       ...cartMeta,
     },
   })

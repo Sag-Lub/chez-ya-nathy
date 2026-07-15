@@ -19,6 +19,8 @@ export type CartItem = {
   imageUrl?: string | null;
   /** Labels lisibles pour l'affichage dans le panier */
   options?: Record<string, string>;
+  /** Plat disponible uniquement le week-end (précommande) — affichage uniquement */
+  weekendOnly?: boolean;
 };
 
 type CartState = {

@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, CalendarDays, Flame, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { formatPrice, cn, dishImageClass, isWeekendOnly } from "@/lib/utils"
+import { getNextAvailableWeekendDate, formatWeekendDate } from "@/lib/preorder"
 import { Button } from "@/components/ui/Button"
-import type { Dish, DishOption, SpiceLevel, Story } from "@/lib/types"
+import type { Dish, SpiceLevel, Story } from "@/lib/types"
 
 const SPICE_OPTIONS: { value: SpiceLevel; label: string; color: string }[] = [
   { value: "doux",             label: "Doux",              color: "border-feuille  text-feuille  bg-feuille/10"  },
@@ -33,6 +34,9 @@ export function DishDetailClient({ dish }: Props) {
   const [quantity,       setQuantity]       = useState(1)
   const [added,          setAdded]          = useState(false)
 
+  const weekendDish     = isWeekendOnly(dish.available_days)
+  const nextWeekendDate = weekendDish ? getNextAvailableWeekendDate() : null
+
   const extrasPrice = [...selectedExtras].reduce((sum, id) => {
     return sum + (extras.find(o => o.id === id)?.extra_price_cents ?? 0)
   }, 0)
@@ -54,6 +58,7 @@ export function DishDetailClient({ dish }: Props) {
       priceCents:        unitPrice,
       quantity,
       imageUrl:          dish.image_url,
+      weekendOnly:       weekendDish,
       selectedOptionIds: [
         ...(selectedBase ? [selectedBase] : []),
         ...[...selectedExtras],
@@ -134,7 +139,7 @@ export function DishDetailClient({ dish }: Props) {
             {isWeekendOnly(dish.available_days) && (
               <span className="inline-flex items-center gap-1 bg-pili/10 text-pili text-[10px] font-bold px-2.5 py-1 rounded-full">
                 <CalendarDays className="h-3 w-3" />
-                Disponible le week-end uniquement
+                Week-end sur précommande
               </span>
             )}
           </div>
@@ -153,6 +158,21 @@ export function DishDetailClient({ dish }: Props) {
         <p className="text-sm text-encre/70 leading-relaxed mb-6 text-center">
           {dish.description}
         </p>
+
+        {/* Explication précommande week-end */}
+        {isWeekendOnly(dish.available_days) && (
+          <div className="bg-pili/8 border border-pili/15 rounded-2xl p-4 mb-6 text-center">
+            <p className="text-sm text-encre/75 leading-relaxed">
+              Ce plat demande une préparation plus longue. Vous pouvez le
+              précommander dès maintenant pour le samedi ou le dimanche.
+            </p>
+            {nextWeekendDate && (
+              <p className="text-xs font-semibold text-pili mt-2">
+                Prochaine date disponible : {formatWeekendDate(nextWeekendDate)}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Histoire du plat */}
         {story && (
@@ -209,7 +229,8 @@ export function DishDetailClient({ dish }: Props) {
                   onChange={checked => {
                     setSelectedExtras(prev => {
                       const next = new Set(prev)
-                      checked ? next.add(opt.id) : next.delete(opt.id)
+                      if (checked) next.add(opt.id)
+                      else next.delete(opt.id)
                       return next
                     })
                   }}
@@ -235,7 +256,7 @@ export function DishDetailClient({ dish }: Props) {
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                Ajouter · {formatPrice(totalPrice)}
+                {weekendDish ? "Précommander" : "Ajouter"} · {formatPrice(totalPrice)}
               </>
             )}
           </Button>

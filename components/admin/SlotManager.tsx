@@ -152,7 +152,7 @@ export function SlotManager({ initialSlots }: Props) {
   const toggleGenWeekday = (value: number) => {
     setGenWeekdays((prev) => {
       const next = new Set(prev)
-      next.has(value) ? next.delete(value) : next.add(value)
+      if (next.has(value)) next.delete(value); else next.add(value)
       return next
     })
   }
@@ -161,7 +161,7 @@ export function SlotManager({ initialSlots }: Props) {
     const key = `${start}|${end}`
     setGenTimes((prev) => {
       const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
+      if (next.has(key)) next.delete(key); else next.add(key)
       return next
     })
   }
@@ -178,7 +178,7 @@ export function SlotManager({ initialSlots }: Props) {
     const key = `${start}|${end}`
     setSelected((prev) => {
       const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
+      if (next.has(key)) next.delete(key); else next.add(key)
       return next
     })
   }

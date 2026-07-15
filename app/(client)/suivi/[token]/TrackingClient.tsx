@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { formatPrice, formatDateLabel, formatTimeRange } from "@/lib/utils"
+import { formatPrice } from "@/lib/utils"
 import type { Order, OrderStatus } from "@/lib/types"
 
 const STEPS: { key: OrderStatus; label: string; emoji: string }[] = [

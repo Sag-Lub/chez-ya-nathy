@@ -64,10 +64,3 @@ export function isWeekendOnly(availableDays: number[] | null): boolean {
   const set = new Set(availableDays)
   return set.size <= 2 && set.has(0) && set.has(6)
 }
-
-/** Une date (YYYY-MM-DD) respecte-t-elle les jours autorisés d'un plat ? */
-export function isDateAllowedForDish(dateStr: string, availableDays: number[] | null): boolean {
-  if (!availableDays) return true
-  const day = new Date(dateStr + "T12:00:00").getDay()
-  return availableDays.includes(day)
-}

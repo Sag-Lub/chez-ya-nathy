@@ -75,7 +75,7 @@ export function OrdersBoard({ initialOrders }: Props) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3 text-encre/40">
         <span className="text-5xl">🍽</span>
-        <p className="text-sm">Aucune commande pour l'instant</p>
+        <p className="text-sm">Aucune commande pour l&apos;instant</p>
       </div>
     )
   }

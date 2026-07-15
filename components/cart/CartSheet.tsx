@@ -65,6 +65,12 @@ export function CartSheet({ isOpen, onClose }: CartSheetProps) {
 
         {/* Articles — cartes kwanga pleines pour rester lisibles sur le flou */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {items.some(i => i.weekendOnly) && (
+            <p className="text-xs text-pili bg-pili/8 border border-pili/15 rounded-xl px-3 py-2.5 leading-relaxed">
+              Votre panier contient un plat disponible uniquement le week-end.
+              Toute votre commande sera préparée pour la date de précommande sélectionnée.
+            </p>
+          )}
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-encre/30 py-16">
               <ShoppingBag className="h-14 w-14" />

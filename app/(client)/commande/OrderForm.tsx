@@ -6,7 +6,8 @@ import Link from "next/link"
 import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, ShoppingBag, Truck, UtensilsCrossed } from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { createClient } from "@/lib/supabase/client"
-import { formatPrice, formatDateLong, formatTimeRange, isDateAllowedForDish } from "@/lib/utils"
+import { formatPrice, formatDateLong, formatTimeRange } from "@/lib/utils"
+import { canOrderDishForDate } from "@/lib/preorder"
 import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import type { DeliveryZone, DeliverySlot } from "@/lib/types"
@@ -135,6 +136,7 @@ export function OrderForm() {
 
   // ── Étape 3 ───────────────────────────────────────────────────
   const [paymentMethod, setPaymentMethod] = useState<"carte" | "especes">("carte")
+  const [notes, setNotes] = useState("")
 
   // ─── Totaux ───────────────────────────────────────────────────
   const subtotal     = items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
@@ -205,7 +207,7 @@ export function OrderForm() {
 
     const availableSlots = (rawSlots ?? []).filter((s) => s.orders_count < s.max_orders) as DeliverySlot[]
     const filteredSlots = availableSlots.filter((slot) =>
-      (cartDishes ?? []).every((d) => isDateAllowedForDish(slot.slot_date, d.available_days))
+      (cartDishes ?? []).every((d) => canOrderDishForDate(d.available_days, slot.slot_date))
     )
 
     setWeekendOnlyRestriction(filteredSlots.length < availableSlots.length)
@@ -257,6 +259,7 @@ export function OrderForm() {
           address:    type === "livraison" ? address    : undefined,
           slotId:     type === "livraison" ? selectedSlotId ?? undefined : undefined,
           paymentMethod,
+          notes:      notes.trim() || undefined,
         }),
       })
 
@@ -283,7 +286,9 @@ export function OrderForm() {
           className="p-2 -ml-2 rounded-full hover:bg-encre/5">
           <ArrowLeft className="h-5 w-5 text-encre" />
         </button>
-        <span className="font-serif font-bold text-encre ml-2">Votre commande</span>
+        <span className="font-serif font-bold text-encre ml-2">
+          {weekendOnlyRestriction ? "Votre précommande" : "Votre commande"}
+        </span>
       </header>
 
       <div className="max-w-lg mx-auto px-4 pb-24">
@@ -439,6 +444,22 @@ export function OrderForm() {
                 </div>
               </div>
             </div>
+
+            {/* Remarques */}
+            <label className="block bg-white rounded-2xl p-4">
+              <span className="text-sm font-semibold text-encre mb-1.5 flex items-center gap-1">
+                Une remarque pour Nathy ?
+                <span className="text-encre/40 text-xs font-normal">(facultatif)</span>
+              </span>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                maxLength={500}
+                rows={3}
+                placeholder="Allergie, préférence de cuisson, digicode, instructions…"
+                className="w-full px-3 py-2.5 rounded-xl border-2 border-encre/15 bg-kwanga/40 text-sm text-encre placeholder:text-encre/35 focus:border-liboke focus:outline-none resize-none"
+              />
+            </label>
 
             {/* Mode de paiement */}
             <div className="bg-white rounded-2xl p-4 space-y-3">

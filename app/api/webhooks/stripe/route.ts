@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       subtotal_cents:       Number(meta.subtotal_cents),
       delivery_fee_cents:   Number(meta.delivery_fee_cents),
       total_cents:          session.amount_total ?? 0,
-      notes:                null,
+      notes:                meta.notes || null,
       stripe_session_id:    session.id,
       stripe_payment_intent: session.payment_intent as string | null,
     })

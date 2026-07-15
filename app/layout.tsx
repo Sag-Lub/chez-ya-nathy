@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Chez ya Nathy — Cuisine congolaise faite maison",
+  title: "Chez ya Nathy | Cuisine congolaise et spécialités africaines",
   description:
-    "Commandez les plats congolais faits maison de Nathy, livrés à Lyon et alentours. Moambe, pondu, makayabu… le goût du pays, chez vous.",
+    "Découvrez Chez ya Nathy, une cuisine congolaise et africaine faite maison. Commandez vos plats préférés en livraison ou en retrait.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -25,11 +25,12 @@ export const metadata: Metadata = {
     title: "Chez ya Nathy",
   },
   openGraph: {
-    title: "Chez ya Nathy",
+    title: "Chez ya Nathy | Cuisine congolaise et spécialités africaines",
     description:
-      "La cuisine congolaise faite maison, livrée à Lyon et alentours.",
+      "Cuisine congolaise et spécialités africaines faites maison. Commandez en livraison ou en retrait, précommandez vos plats du week-end.",
     locale: "fr_FR",
     type: "website",
+    siteName: "Chez ya Nathy",
   },
 };
 
