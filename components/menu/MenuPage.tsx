@@ -81,6 +81,18 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Écoute le bouton "Voir les plats à précommander" de la section précommandes
+  useEffect(() => {
+    function handler() {
+      setUniverse("all")
+      setActiveType(PREORDER_TYPE)
+      syncUrl("all", PREORDER_TYPE)
+    }
+    window.addEventListener("nathy:filter", handler)
+    return () => window.removeEventListener("nathy:filter", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function syncUrl(nextUniverse: UniverseFilter, nextType: string | null) {
     const params = new URLSearchParams()
     const universParam = UNIVERSE_TO_PARAM[nextUniverse]

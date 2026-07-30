@@ -162,7 +162,10 @@ export function PreorderSection() {
           </ol>
 
           <button
-            onClick={() => scrollTo("#carte")}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("nathy:filter", { detail: { type: "precommandes" } }))
+              scrollTo("#carte")
+            }}
             className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-liboke hover:gap-3 transition-all"
           >
             Voir les plats à précommander
