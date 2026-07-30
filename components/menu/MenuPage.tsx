@@ -110,7 +110,8 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
   function handleUniverseChange(id: string | null) {
     const next = (id ?? "all") as UniverseFilter
     setUniverse(next)
-    syncUrl(next, activeType)
+    setActiveType(null)
+    syncUrl(next, null)
   }
 
   function handleTypeChange(id: string | null) {
