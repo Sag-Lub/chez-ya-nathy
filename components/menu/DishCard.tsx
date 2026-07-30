@@ -34,7 +34,7 @@ export function DishCard({ dish }: DishCardProps) {
             loading="lazy"
             className={cn(
               isPng
-                ? "h-full w-full object-contain p-6 bg-carte2"
+                ? "h-full w-full object-contain p-6 bg-white"
                 : "h-full w-full object-cover",
               "transition-transform duration-500 group-hover:scale-[1.04]"
             )}
