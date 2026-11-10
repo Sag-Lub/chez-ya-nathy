@@ -1,64 +1,76 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Home, ShoppingBag } from "lucide-react"
+import { useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { MapPinned, ShoppingBag, UtensilsCrossed } from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { CartSheet } from "@/components/cart/CartSheet"
+import { cn } from "@/lib/utils"
 
+const ITEM =
+  "relative flex h-[52px] min-w-[86px] flex-col items-center justify-center gap-0.5 rounded-full px-4 text-[12px] font-bold transition-colors duration-150"
+const IDLE = "text-kwanga hover:bg-kwanga/10"
+const ACTIVE = "bg-safou text-encre"
+
+/**
+ * Navigation basse flottante, en verre : Menu, Panier (avec le nombre d'articles), Suivi.
+ * Elle s'efface sur la fiche plat et dans le tunnel de commande, qui ont déjà
+ * leur propre action principale en bas d'écran.
+ */
 export function BottomNav() {
   const [cartOpen, setCartOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
-  const totalItems = useCartStore(s => s.totalItems)
   const pathname = usePathname()
 
-  const isHome = pathname === "/"
+  // Nombre d'articles — lu côté client uniquement (panier conservé dans le navigateur)
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
+  const storedCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0))
+  const count = mounted ? storedCount : 0
 
-  // Pages avec leur propre barre d'action fixe — la nav céderait la place.
-  // L'accueil a désormais son header complet avec panier.
-  if (isHome || pathname.startsWith("/plat/") || pathname.startsWith("/commande")) {
-    return null
-  }
+  const focusedFlow =
+    pathname.startsWith("/plat/") || (pathname.startsWith("/commande") && !pathname.startsWith("/commande/confirmation"))
+
+  const onMenu = pathname === "/"
+  const onSuivi = pathname.startsWith("/suivi") || pathname.startsWith("/commande/confirmation")
 
   return (
     <>
-      <nav
-        aria-label="Navigation principale"
-        className="glass fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 px-2 py-1.5 rounded-full shadow-[0_8px_32px_rgba(43,27,18,0.18)]"
-      >
-        {/* Menu */}
-        <Link
-          href="/"
-          className={[
-            "flex flex-col items-center gap-0.5 px-5 py-2 rounded-full transition-colors",
-            isHome
-              ? "text-liboke bg-liboke/8"
-              : "text-encre/45 hover:text-encre hover:bg-encre/6",
-          ].join(" ")}
-          aria-label="Menu"
+      {!focusedFlow && (
+        <nav
+          aria-label="Navigation principale"
+          className="verre fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full p-1.5 shadow-[0_12px_32px_rgba(43,27,18,0.3)] bottom-[max(1rem,env(safe-area-inset-bottom))]"
         >
-          <Home className="h-[18px] w-[18px]" />
-          <span className="text-[10px] font-semibold tracking-wide">Menu</span>
-        </Link>
+          <Link href="/" aria-current={onMenu ? "page" : undefined} className={cn(ITEM, onMenu ? ACTIVE : IDLE)}>
+            <UtensilsCrossed className="h-[22px] w-[22px]" aria-hidden />
+            Menu
+          </Link>
 
-        {/* Panier */}
-        <button
-          onClick={() => setCartOpen(true)}
-          className="relative flex flex-col items-center gap-0.5 px-5 py-2 rounded-full text-encre/45 hover:text-encre hover:bg-encre/6 transition-colors"
-          aria-label="Ouvrir le panier"
-        >
-          <ShoppingBag className="h-[18px] w-[18px]" />
-          {mounted && totalItems() > 0 && (
-            <span className="absolute top-1.5 right-3 bg-pili text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center leading-none tabular-nums">
-              {totalItems() > 9 ? "9+" : totalItems()}
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            aria-label={count > 0 ? `Ouvrir le panier, ${count} article${count > 1 ? "s" : ""}` : "Ouvrir le panier"}
+            className={cn(ITEM, cartOpen ? ACTIVE : IDLE)}
+          >
+            <span className="relative">
+              <ShoppingBag className="h-[22px] w-[22px]" aria-hidden />
+              {count > 0 && (
+                <span
+                  key={count}
+                  className="anim-pop absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-pili px-1 text-[11px] font-bold leading-none text-white tabular-nums"
+                >
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
             </span>
-          )}
-          <span className="text-[10px] font-semibold tracking-wide">Panier</span>
-        </button>
-      </nav>
+            Panier
+          </button>
+
+          <Link href="/suivi" aria-current={onSuivi ? "page" : undefined} className={cn(ITEM, onSuivi ? ACTIVE : IDLE)}>
+            <MapPinned className="h-[22px] w-[22px]" aria-hidden />
+            Suivi
+          </Link>
+        </nav>
+      )}
 
       <CartSheet isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </>
