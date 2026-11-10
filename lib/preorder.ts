@@ -98,3 +98,37 @@ export function formatWeekendDate(dateStr: string): string {
     timeZone: preorderSettings.timezone,
   }).format(new Date(dateStr + "T12:00:00"))
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Délai de préparation (dishes.lead_time_hours)
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Nombre d'heures entre maintenant et le début d'un créneau, en heure de Paris.
+ * Négatif si le créneau est déjà commencé.
+ * (Comparaison d'horloges « murales » : exacte hors nuit de changement d'heure.)
+ */
+export function hoursUntilSlot(slotDate: string, startTime: string): number {
+  const now = nowInParis()
+  const [ny, nm, nd] = now.date.split("-").map(Number)
+  const [sy, sm, sd] = slotDate.split("-").map(Number)
+  const [sh, smin] = startTime.split(":").map(Number)
+  const nowWall = Date.UTC(ny, nm - 1, nd, now.hour, now.minute)
+  const slotWall = Date.UTC(sy, sm - 1, sd, sh, smin ?? 0)
+  return (slotWall - nowWall) / 3_600_000
+}
+
+/**
+ * Un créneau est-il encore réservable pour un plat ?
+ * Combine : créneau pas encore commencé, délai de préparation du plat
+ * (lead_time_hours), jours autorisés et heure limite de précommande.
+ */
+export function canOrderDishForSlot(
+  dish: { available_days: number[] | null; lead_time_hours?: number | null },
+  slot: { slot_date: string; start_time: string }
+): boolean {
+  const hours = hoursUntilSlot(slot.slot_date, slot.start_time)
+  if (hours <= 0) return false
+  if (hours < (dish.lead_time_hours ?? 0)) return false
+  return canOrderDishForDate(dish.available_days, slot.slot_date)
+}

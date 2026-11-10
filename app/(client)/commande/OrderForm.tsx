@@ -1,102 +1,126 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useRef, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, ShoppingBag, Truck, UtensilsCrossed } from "lucide-react"
+import {
+  ArrowLeft,
+  Banknote,
+  Bike,
+  CalendarDays,
+  Check,
+  CircleAlert,
+  CreditCard,
+  Loader2,
+  MapPin,
+  ShoppingBag,
+  Store,
+} from "lucide-react"
 import { useCartStore } from "@/store/cart"
 import { createClient } from "@/lib/supabase/client"
-import { formatPrice, formatDateLong, formatTimeRange } from "@/lib/utils"
-import { canOrderDishForDate } from "@/lib/preorder"
-import { Button } from "@/components/ui/Button"
-import { cn } from "@/lib/utils"
+import { formatPrice, formatDateLong, formatTimeRange, cn } from "@/lib/utils"
+import { canOrderDishForSlot } from "@/lib/preorder"
+import { restaurantSettings } from "@/lib/config"
+import { Button, buttonClass } from "@/components/ui/Button"
+import { DishPhoto } from "@/components/ui/DishPhoto"
+import { cartItemOptionLine } from "@/components/cart/CartItem"
 import type { DeliveryZone, DeliverySlot } from "@/lib/types"
+
+type Step = 1 | 2 | 3
+type OrderKind = "livraison" | "emporter"
+type Payment = "carte" | "especes"
+
+const STEPS = ["Coordonnées", "Livraison", "Paiement"]
 
 // ─── Sous-composants ────────────────────────────────────────────
 
-function StepProgress({ current }: { current: 1 | 2 | 3 }) {
-  const steps = ["Vous", "Livraison", "Récap"]
+function StepProgress({ current }: { current: Step }) {
   return (
-    <div className="flex items-center justify-center gap-2 py-5 px-4">
-      {steps.map((label, i) => {
-        const n      = (i + 1) as 1 | 2 | 3
-        const done   = n < current
-        const active = n === current
+    <ol className="flex gap-2" aria-label="Étapes de la commande">
+      {STEPS.map((label, i) => {
+        const n = i + 1
+        const reached = n <= current
         return (
-          <div key={n} className="flex items-center gap-2">
-            {i > 0 && (
-              <div className={cn("h-px w-8 transition-colors", done ? "bg-liboke" : "bg-encre/15")} />
-            )}
-            <div className="flex flex-col items-center gap-1">
-              <div className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                done   && "bg-liboke text-white",
-                active && "bg-liboke text-white ring-4 ring-liboke/20",
-                !done && !active && "bg-encre/10 text-encre/40"
-              )}>
-                {done ? "✓" : n}
-              </div>
-              <span className={cn("text-[10px] font-medium", active ? "text-liboke" : "text-encre/40")}>
-                {label}
-              </span>
-            </div>
-          </div>
+          <li key={label} className="flex-1" aria-current={n === current ? "step" : undefined}>
+            <span className={cn("block h-2 rounded-full transition-colors duration-200", reached ? "bg-liboke" : "bg-encre/12")} />
+            <span className={cn("mt-2 block text-[13px] font-bold", n === current ? "text-encre" : "text-encre/70")}>
+              {n}. {label}
+            </span>
+          </li>
         )
       })}
-    </div>
+    </ol>
+  )
+}
+
+const FIELD =
+  "h-14 w-full rounded-[18px] border-2 bg-carte px-4 text-[16px] text-encre placeholder:text-encre/55 transition-colors duration-150 focus:outline-none"
+
+function FieldError({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} role="alert" className="mt-1.5 flex items-start gap-1.5 text-[14px] font-semibold text-pili">
+      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+      <span>{children}</span>
+    </p>
   )
 }
 
 function InputField({
   label,
-  optional,
+  hint,
   error,
+  id,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; optional?: boolean; error?: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; error?: string; id: string }) {
   return (
-    <label className="block">
-      <span className="text-sm font-medium text-encre mb-1.5 flex items-center gap-1">
-        {label}
-        {optional && <span className="text-encre/40 text-xs font-normal">(facultatif)</span>}
-      </span>
+    <div>
+      <label htmlFor={id} className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-[15px] font-bold text-encre">{label}</span>
+        {hint && <span className="text-[13px] text-encre/70">{hint}</span>}
+      </label>
       <input
-        className={cn(
-          "w-full h-12 px-4 rounded-xl border-2 bg-carte text-encre",
-          "focus:outline-none transition-colors",
-          error ? "border-pili focus:border-pili" : "border-encre/15 focus:border-liboke"
-        )}
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-erreur` : undefined}
+        className={cn(FIELD, error ? "border-pili" : "border-encre/15 focus:border-liboke")}
         {...props}
       />
-      {error && <p className="text-xs text-pili mt-1">{error}</p>}
-    </label>
+      {error && <FieldError id={`${id}-erreur`}>{error}</FieldError>}
+    </div>
   )
 }
 
-function TypeToggle({
+/** Deux grands choix côte à côte (livraison / à emporter, carte / espèces). */
+function ChoiceCards<T extends string>({
+  label,
   value,
   onChange,
+  options,
 }: {
-  value: "livraison" | "emporter"
-  onChange: (v: "livraison" | "emporter") => void
+  label: string
+  value: T
+  onChange: (v: T) => void
+  options: { value: T; label: string; icon: React.ComponentType<{ className?: string }> }[]
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {(["livraison", "emporter"] as const).map((t) => {
-        const Icon = t === "livraison" ? Truck : UtensilsCrossed
+    <div role="radiogroup" aria-label={label} className="grid grid-cols-2 gap-3">
+      {options.map((opt) => {
+        const selected = value === opt.value
+        const Icon = opt.icon
         return (
           <button
-            key={t}
+            key={opt.value}
             type="button"
-            onClick={() => onChange(t)}
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(opt.value)}
             className={cn(
-              "flex flex-col items-center gap-2 py-5 rounded-2xl border-2 font-semibold text-sm transition-all",
-              value === t
-                ? "border-liboke bg-liboke/8 text-liboke"
-                : "border-encre/15 text-encre/60 hover:border-encre/30 bg-carte"
+              "flex min-h-[96px] flex-col items-start justify-between rounded-[22px] p-4 text-left transition-colors duration-150",
+              selected ? "bg-encre text-kwanga" : "bg-carte text-encre ring-1 ring-inset ring-encre/12"
             )}
           >
-            <Icon className="h-6 w-6" />
-            {t === "livraison" ? "Livraison" : "À emporter"}
+            <Icon className={cn("h-7 w-7", selected ? "text-safou" : "text-braise")} aria-hidden />
+            <span className="text-[17px] font-extrabold">{opt.label}</span>
           </button>
         )
       })}
@@ -104,14 +128,40 @@ function TypeToggle({
   )
 }
 
+function RecapCard({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string
+  onEdit?: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-[22px] bg-carte p-4 ring-1 ring-inset ring-encre/8">
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <h2 className="text-[15px] font-extrabold text-encre">{title}</h2>
+        {onEdit && (
+          <button type="button" onClick={onEdit} className="-my-2 -mr-2 h-11 rounded-full px-3 text-[14px] font-bold text-braise underline underline-offset-2">
+            Modifier
+          </button>
+        )}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 // ─── Composant principal ─────────────────────────────────────────
 
 export function OrderForm() {
-  const router   = useRouter()
-  const items    = useCartStore((s) => s.items)
-  const supabase = createClient()
+  const router = useRouter()
+  const items = useCartStore((s) => s.items)
+  // Le panier vit dans le navigateur : on attend d'y être avant d'afficher quoi que ce soit
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [supabase] = useState(() => createClient())
+  const [step, setStep] = useState<Step>(1)
   const [submitting, setSubmitting] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
 
@@ -122,44 +172,48 @@ export function OrderForm() {
   const [errors1, setErrors1] = useState<Record<string, string>>({})
 
   // ── Étape 2 ───────────────────────────────────────────────────
-  const [type,           setType]           = useState<"livraison" | "emporter">("livraison")
+  const [type,           setType]           = useState<OrderKind>("livraison")
   const [postalCode,     setPostalCode]     = useState("")
   const [zone,           setZone]           = useState<DeliveryZone | null>(null)
   const [zoneError,      setZoneError]      = useState<string | null>(null)
   const [zoneLoading,    setZoneLoading]    = useState(false)
   const [address,        setAddress]        = useState("")
   const [slots,          setSlots]          = useState<DeliverySlot[]>([])
-  const [slotsLoading,   setSlotsLoading]   = useState(false)
   const [weekendOnlyRestriction, setWeekendOnlyRestriction] = useState(false)
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [errors2, setErrors2] = useState<Record<string, string>>({})
+  const zoneRequest = useRef(0)
 
   // ── Étape 3 ───────────────────────────────────────────────────
-  const [paymentMethod, setPaymentMethod] = useState<"carte" | "especes">("carte")
+  const [paymentMethod, setPaymentMethod] = useState<Payment>("carte")
   const [notes, setNotes] = useState("")
 
-  // ─── Totaux ───────────────────────────────────────────────────
+  // ─── Totaux (affichage seulement : le serveur recalcule tout) ──
   const subtotal     = items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
   const deliveryFee  = type === "livraison" ? (zone?.fee_cents ?? 0) : 0
   const total        = subtotal + deliveryFee
   const selectedSlot = slots.find((s) => s.id === selectedSlotId)
+  const hasWeekendDish = items.some((i) => i.weekendOnly)
+
+  function goToStep(next: Step) {
+    setStep(next)
+    setGlobalError(null)
+    window.scrollTo({ top: 0 })
+  }
 
   // ─── Validation étape 1 ───────────────────────────────────────
   function validateStep1(): boolean {
     const e: Record<string, string> = {}
-    if (!name.trim() || name.trim().length < 2) e.name = "Votre nom est requis"
-    if (!phone.trim() || phone.replace(/\s/g, "").length < 10)
-      e.phone = "Numéro de téléphone invalide"
+    if (name.trim().length < 2) e.name = "Dis-nous comment tu t'appelles"
+    if (phone.replace(/\D/g, "").length < 10) e.phone = "Ce numéro semble incomplet (10 chiffres)"
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = "Cette adresse email semble incorrecte"
     setErrors1(e)
     return Object.keys(e).length === 0
   }
 
-  // ─── Vérification zone ────────────────────────────────────────
-  const checkZone = useCallback(async () => {
-    if (!postalCode.match(/^\d{5}$/)) {
-      setZoneError("Code postal invalide (5 chiffres)")
-      return
-    }
+  // ─── Vérification de la zone + chargement des créneaux ────────
+  async function checkZone(code: string) {
+    const requestId = ++zoneRequest.current
     setZoneLoading(true)
     setZoneError(null)
     setZone(null)
@@ -169,76 +223,84 @@ export function OrderForm() {
     const { data } = await supabase
       .from("delivery_zones")
       .select("*")
-      .eq("postal_code", postalCode)
+      .eq("postal_code", code)
       .eq("is_active", true)
       .maybeSingle()
 
+    if (requestId !== zoneRequest.current) return // une saisie plus récente a pris le relais
+
     if (!data) {
-      setZoneError("Zone non desservie. Contactez Nathy si vous êtes proche.")
+      setZoneError("On ne livre pas encore ce code postal. Tu peux choisir « À emporter ».")
       setZoneLoading(false)
       return
     }
 
     if (subtotal < data.min_order_cents) {
-      setZoneError(`Commande minimum de ${formatPrice(data.min_order_cents)} pour cette zone.`)
+      setZoneError(`Le minimum de commande est de ${formatPrice(data.min_order_cents)} pour ${data.city}. Ajoute un plat ou un accompagnement.`)
       setZoneLoading(false)
       return
     }
 
-    setZone(data)
-
-    // Chargement des créneaux disponibles
-    setSlotsLoading(true)
+    // Créneaux ouverts à partir d'aujourd'hui
     const today = new Date().toISOString().split("T")[0]
-    const { data: rawSlots } = await supabase
-      .from("delivery_slots")
-      .select("*")
-      .eq("is_active", true)
-      .gte("slot_date", today)
-      .order("slot_date")
-      .order("start_time")
-
-    // Un plat réservé au week-end restreint les jours de livraison proposés
     const dishIds = [...new Set(items.map((i) => i.dishId))]
-    const { data: cartDishes } = await supabase
-      .from("dishes")
-      .select("id, available_days")
-      .in("id", dishIds)
+    const [{ data: rawSlots }, { data: cartDishes }] = await Promise.all([
+      supabase
+        .from("delivery_slots")
+        .select("*")
+        .eq("is_active", true)
+        .gte("slot_date", today)
+        .order("slot_date")
+        .order("start_time"),
+      // Un plat réservé au week-end, ou qui demande un délai de préparation,
+      // restreint les créneaux proposés
+      supabase.from("dishes").select("id, available_days, lead_time_hours").in("id", dishIds),
+    ])
 
-    const availableSlots = (rawSlots ?? []).filter((s) => s.orders_count < s.max_orders) as DeliverySlot[]
-    const filteredSlots = availableSlots.filter((slot) =>
-      (cartDishes ?? []).every((d) => canOrderDishForDate(d.available_days, slot.slot_date))
+    if (requestId !== zoneRequest.current) return
+
+    const openSlots = ((rawSlots ?? []) as DeliverySlot[]).filter((s) => s.orders_count < s.max_orders)
+    const upcomingSlots = openSlots.filter((slot) =>
+      canOrderDishForSlot({ available_days: null, lead_time_hours: 0 }, slot)
+    )
+    const filteredSlots = upcomingSlots.filter((slot) =>
+      (cartDishes ?? []).every((d) => canOrderDishForSlot(d, slot))
     )
 
-    setWeekendOnlyRestriction(filteredSlots.length < availableSlots.length)
+    setWeekendOnlyRestriction(filteredSlots.length < upcomingSlots.length)
     setSlots(filteredSlots)
-    setSlotsLoading(false)
+    setZone(data as DeliveryZone)
     setZoneLoading(false)
-  }, [postalCode, subtotal, items, supabase])
+  }
 
-  // ─── Panier vide — après tous les hooks (Rules of Hooks) ─────
-  if (items.length === 0) {
-    return (
-      <div className="min-h-screen bg-kwanga flex flex-col items-center justify-center gap-5 px-6">
-        <ShoppingBag className="h-14 w-14 text-encre/20" />
-        <p className="text-encre/60 text-center text-sm">Votre panier est vide.</p>
-        <Link href="/"><Button variant="secondary">Voir le menu</Button></Link>
-      </div>
-    )
+  function handlePostalCode(value: string) {
+    const code = value.replace(/\D/g, "").slice(0, 5)
+    setPostalCode(code)
+    setErrors2({})
+    if (code.length === 5) {
+      void checkZone(code)
+    } else {
+      zoneRequest.current++
+      setZone(null)
+      setZoneError(null)
+      setZoneLoading(false)
+      setSlots([])
+      setSelectedSlotId(null)
+    }
   }
 
   // ─── Validation étape 2 ───────────────────────────────────────
   function validateStep2(): boolean {
     if (type === "emporter") return true
     const e: Record<string, string> = {}
-    if (!zone) e.zone = "Vérifiez votre code postal"
-    if (!address.trim()) e.address = "Votre adresse est requise"
-    if (!selectedSlotId) e.slot = "Choisissez un créneau de livraison"
+    if (!zone) e.zone = zoneError ? "" : "Indique ton code postal pour vérifier la zone de livraison"
+    if (zone && address.trim().length < 5) e.address = "Indique ton adresse complète"
+    if (zone && !selectedSlotId) e.slot = "Choisis un créneau de livraison"
     setErrors2(e)
     return Object.keys(e).length === 0
   }
 
-  // ─── Paiement Stripe ─────────────────────────────────────────
+  // ─── Envoi : Stripe (carte) ou création directe (espèces) ─────
   async function handlePay() {
     setSubmitting(true)
     setGlobalError(null)
@@ -248,275 +310,333 @@ export function OrderForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cartItems: items.map((item) => ({
-            dishId:           item.dishId,
-            quantity:         item.quantity,
-            spice:            item.options?.["spice"] ?? null,
+            dishId:            item.dishId,
+            quantity:          item.quantity,
+            spice:             item.options?.["spice"] ?? null,
             selectedOptionIds: item.selectedOptionIds ?? [],
           })),
-          customer: { name, phone, email: email || undefined },
+          customer:   { name: name.trim(), phone: phone.trim(), email: email.trim() || undefined },
           type,
           postalCode: type === "livraison" ? postalCode : undefined,
-          address:    type === "livraison" ? address    : undefined,
+          address:    type === "livraison" ? address.trim() : undefined,
           slotId:     type === "livraison" ? selectedSlotId ?? undefined : undefined,
           paymentMethod,
           notes:      notes.trim() || undefined,
         }),
       })
 
-      const data = await res.json()
-      if (!res.ok) {
-        setGlobalError(data.error ?? "Une erreur est survenue")
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) {
+        setGlobalError(data.error ?? "Une erreur est survenue. Réessaie dans un instant.")
         setSubmitting(false)
         return
       }
       // Redirection vers Stripe Checkout (carte) ou directement la confirmation (espèces)
       window.location.href = data.url
     } catch {
-      setGlobalError("Impossible de contacter le serveur. Réessayez.")
+      setGlobalError("Impossible de joindre le serveur. Vérifie ta connexion et réessaie.")
       setSubmitting(false)
     }
+  }
+
+  // ─── Chargement / panier vide ─────────────────────────────────
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-kwanga" aria-busy="true">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-encre/15 border-t-liboke" role="status" aria-label="Chargement" />
+      </div>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-kwanga px-7 text-center">
+        <span className="flex h-24 w-24 items-center justify-center rounded-full bg-safou text-encre">
+          <ShoppingBag className="h-11 w-11" aria-hidden />
+        </span>
+        <h1 className="titre mt-6 text-[34px] text-encre">Ton panier est vide</h1>
+        <p className="mt-3 max-w-xs text-[16px] leading-relaxed text-encre/70">
+          Choisis d&apos;abord un plat sur la carte, puis reviens ici pour commander.
+        </p>
+        <Link href="/" className={buttonClass("primary", "lg", "mt-7 w-full max-w-xs")}>
+          Voir le menu
+        </Link>
+      </main>
+    )
   }
 
   // ─── Rendu ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-kwanga">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-kwanga/95 backdrop-blur-sm border-b border-encre/8 h-14 flex items-center px-4">
-        <button onClick={() => (step === 1 ? router.back() : setStep((s) => (s - 1) as 1 | 2 | 3))}
-          className="p-2 -ml-2 rounded-full hover:bg-encre/5">
-          <ArrowLeft className="h-5 w-5 text-encre" />
-        </button>
-        <span className="font-serif font-bold text-encre ml-2">
-          {weekendOnlyRestriction ? "Votre précommande" : "Votre commande"}
-        </span>
+      <header className="mx-auto max-w-lg px-5 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => (step === 1 ? router.push("/") : goToStep((step - 1) as Step))}
+            aria-label={step === 1 ? "Retour au menu" : "Étape précédente"}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sable text-encre transition-transform duration-150 active:scale-95"
+          >
+            <ArrowLeft className="h-6 w-6" aria-hidden />
+          </button>
+          <h1 className="titre text-[30px] text-encre">
+            {hasWeekendDish ? "Ta précommande" : "Ta commande"}
+          </h1>
+        </div>
+        <div className="mt-5">
+          <StepProgress current={step} />
+        </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 pb-24">
-        <StepProgress current={step} />
-
+      <main className="mx-auto max-w-lg px-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-7">
         {/* ═══ ÉTAPE 1 : Coordonnées ════════════════════════════════ */}
         {step === 1 && (
-          <div className="space-y-4">
-            <InputField label="Nom complet" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="Marie Dupont" autoComplete="name" error={errors1.name} />
-            <InputField label="Téléphone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-              placeholder="06 12 34 56 78" autoComplete="tel" error={errors1.phone} />
-            <InputField label="Email" type="email" optional value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="marie@exemple.fr" autoComplete="email" />
-            <Button size="lg" className="w-full mt-2"
-              onClick={() => { if (validateStep1()) setStep(2) }}>
-              Continuer →
-            </Button>
-          </div>
+          <form
+            noValidate
+            className="anim-apparait space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (validateStep1()) goToStep(2)
+            }}
+          >
+            <h2 className="titre text-[26px] text-encre">Qui commande&nbsp;?</h2>
+            <InputField id="commande-nom" label="Prénom et nom" value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Marie Mbala" autoComplete="name" autoCapitalize="words" enterKeyHint="next" error={errors1.name} />
+            <InputField id="commande-tel" label="Téléphone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              placeholder="06 12 34 56 78" autoComplete="tel" enterKeyHint="next" error={errors1.phone} />
+            <InputField id="commande-email" label="Email" hint="Facultatif" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="marie@exemple.fr" autoComplete="email" autoCapitalize="none" enterKeyHint="go" error={errors1.email} />
+            <p className="text-[14px] leading-relaxed text-encre/70">
+              Le téléphone sert à te joindre pour la livraison. L&apos;email, si tu le donnes, reçoit la confirmation et le lien de suivi.
+            </p>
+            <Button type="submit" className="!mt-6 w-full">Continuer</Button>
+          </form>
         )}
 
         {/* ═══ ÉTAPE 2 : Livraison ══════════════════════════════════ */}
         {step === 2 && (
-          <div className="space-y-5">
-            <TypeToggle value={type} onChange={(v) => { setType(v); setZone(null); setSlots([]); setSelectedSlotId(null) }} />
+          <div className="anim-apparait space-y-5">
+            <h2 className="titre text-[26px] text-encre">Comment tu la récupères&nbsp;?</h2>
+            <ChoiceCards<OrderKind>
+              label="Mode de retrait"
+              value={type}
+              onChange={(v) => { setType(v); setErrors2({}) }}
+              options={[
+                { value: "livraison", label: "Livraison", icon: Bike },
+                { value: "emporter", label: "À emporter", icon: Store },
+              ]}
+            />
+
+            {type === "emporter" && (
+              <div className="flex gap-3 rounded-[22px] bg-sable p-4">
+                <Store className="mt-0.5 h-5 w-5 shrink-0 text-braise" aria-hidden />
+                <p className="text-[15px] leading-relaxed text-encre">
+                  {restaurantSettings.pickupAddress && (
+                    <strong className="block font-bold">{restaurantSettings.pickupAddress}</strong>
+                  )}
+                  Nathy t&apos;appelle après ta commande pour convenir de l&apos;heure de retrait.
+                </p>
+              </div>
+            )}
 
             {type === "livraison" && (
               <>
-                {/* Code postal */}
+                {/* Code postal — vérifié dès le cinquième chiffre */}
                 <div>
-                  <label className="text-sm font-medium text-encre mb-1.5 block">
-                    Code postal
-                  </label>
-                  <div className="flex gap-2">
+                  <label htmlFor="commande-cp" className="mb-1.5 block text-[15px] font-bold text-encre">Code postal</label>
+                  <div className="relative">
                     <input
-                      type="text" inputMode="numeric" maxLength={5}
+                      id="commande-cp"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={5}
                       value={postalCode}
-                      onChange={(e) => { setPostalCode(e.target.value); setZone(null); setZoneError(null) }}
-                      placeholder="69007"
-                      className="flex-1 h-12 px-4 rounded-xl border-2 border-encre/15 bg-carte text-encre focus:border-liboke focus:outline-none"
+                      onChange={(e) => handlePostalCode(e.target.value)}
+                      placeholder="69200"
+                      aria-describedby="commande-cp-etat"
+                      className={cn(FIELD, "pr-12 tabular-nums", zoneError ? "border-pili" : zone ? "border-feuille" : "border-encre/15 focus:border-liboke")}
                     />
-                    <Button variant="secondary" onClick={checkZone} disabled={zoneLoading}>
-                      {zoneLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vérifier"}
-                    </Button>
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                      {zoneLoading && <Loader2 className="h-5 w-5 animate-spin text-encre/70" aria-hidden />}
+                      {zone && !zoneLoading && <Check className="h-5 w-5 text-feuille" strokeWidth={3} aria-hidden />}
+                    </span>
                   </div>
-                  {zoneError && <p className="text-xs text-pili mt-1">{zoneError}</p>}
-                  {errors2.zone && !zoneError && <p className="text-xs text-pili mt-1">{errors2.zone}</p>}
-                  {zone && (
-                    <p className="text-xs text-feuille font-semibold mt-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {zone.city} — livraison {formatPrice(zone.fee_cents)}
-                    </p>
-                  )}
+                  <div id="commande-cp-etat" aria-live="polite">
+                    {zoneError && <FieldError>{zoneError}</FieldError>}
+                    {errors2.zone && !zoneError && <FieldError>{errors2.zone}</FieldError>}
+                    {zone && (
+                      <p className="mt-1.5 flex items-center gap-1.5 text-[14px] font-semibold text-encre">
+                        <MapPin className="h-4 w-4 shrink-0 text-feuille" aria-hidden />
+                        {zone.city} — livraison {zone.fee_cents > 0 ? formatPrice(zone.fee_cents) : "offerte"}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Adresse */}
                 {zone && (
-                  <InputField label="Adresse complète" value={address} onChange={(e) => setAddress(e.target.value)}
-                    placeholder="12 rue de la Paix, Bât. A, 3ème étage"
+                  <InputField id="commande-adresse" label="Adresse" hint="Bâtiment, étage, digicode" value={address}
+                    onChange={(e) => setAddress(e.target.value)} placeholder="12 rue de la Paix, bât. A, 3e étage"
                     autoComplete="street-address" error={errors2.address} />
                 )}
 
-                {/* Créneaux */}
                 {zone && (
                   <div>
-                    <p className="text-sm font-medium text-encre mb-3">Choisir un créneau</p>
-                    {weekendOnlyRestriction && (
-                      <p className="text-xs text-pili bg-pili/8 rounded-xl px-3 py-2 mb-3">
-                        Un ou plusieurs plats de votre panier ne sont livrés que le week-end — seuls ces créneaux sont proposés.
+                    <h3 className="mb-2 text-[15px] font-bold text-encre">Créneau de livraison</h3>
+                    {weekendOnlyRestriction && slots.length > 0 && (
+                      <p className="mb-3 flex gap-2.5 rounded-[18px] bg-sable p-3.5 text-[14px] leading-snug text-encre">
+                        <CalendarDays className="mt-0.5 h-[18px] w-[18px] shrink-0 text-pili" aria-hidden />
+                        Ton panier contient un plat qui demande du temps : on ne te propose que les créneaux où il peut être prêt.
                       </p>
                     )}
-                    {slotsLoading ? (
-                      <div className="flex items-center gap-2 text-sm text-encre/50">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Chargement des créneaux…
-                      </div>
-                    ) : slots.length === 0 ? (
-                      <p className="text-sm text-encre/50">
-                        Aucun créneau disponible pour le moment. Contactez Nathy directement.
+                    {slots.length === 0 ? (
+                      <p className="rounded-[18px] bg-sable p-4 text-[15px] leading-relaxed text-encre">
+                        Aucun créneau n&apos;est ouvert pour le moment. Reviens un peu plus tard&nbsp;: Nathy en ajoute chaque semaine.
                       </p>
                     ) : (
-                      <SlotPicker
-                        slots={slots}
-                        selectedId={selectedSlotId}
-                        onSelect={setSelectedSlotId}
-                      />
+                      <SlotPicker slots={slots} selectedId={selectedSlotId} onSelect={(id) => { setSelectedSlotId(id); setErrors2({}) }} />
                     )}
-                    {errors2.slot && <p className="text-xs text-pili mt-2">{errors2.slot}</p>}
+                    {errors2.slot && <FieldError>{errors2.slot}</FieldError>}
                   </div>
                 )}
               </>
             )}
 
-            <Button size="lg" className="w-full"
-              onClick={() => { if (validateStep2()) setStep(3) }}>
-              Continuer →
+            <Button className="!mt-7 w-full" onClick={() => { if (validateStep2()) goToStep(3) }}>
+              Continuer
             </Button>
           </div>
         )}
 
-        {/* ═══ ÉTAPE 3 : Récapitulatif ══════════════════════════════ */}
+        {/* ═══ ÉTAPE 3 : Récapitulatif et paiement ══════════════════ */}
         {step === 3 && (
-          <div className="space-y-4">
-            {/* Infos client */}
-            <div className="bg-carte rounded-2xl p-4 text-sm space-y-0.5">
-              <p className="font-semibold text-encre">{name}</p>
-              <p className="text-encre/60">{phone}</p>
-              {email && <p className="text-encre/60">{email}</p>}
-            </div>
+          <div className="anim-apparait space-y-3">
+            <h2 className="titre mb-4 text-[26px] text-encre">On vérifie, puis on paie</h2>
 
-            {/* Livraison */}
-            <div className="bg-carte rounded-2xl p-4 text-sm space-y-0.5">
-              <p className="font-semibold text-encre flex items-center gap-1.5">
-                {type === "livraison" ? <Truck className="h-4 w-4 text-liboke" /> : <UtensilsCrossed className="h-4 w-4 text-liboke" />}
-                {type === "livraison" ? "Livraison" : "À emporter"}
-              </p>
-              {type === "livraison" && (
-                <>
-                  <p className="text-encre/60">{address}, {postalCode}</p>
-                  {selectedSlot && (
-                    <p className="text-encre/60">
-                      {formatDateLong(selectedSlot.slot_date)} ·{" "}
-                      {formatTimeRange(selectedSlot.start_time, selectedSlot.end_time)}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Panier */}
-            <div className="bg-carte rounded-2xl p-4 space-y-2">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-encre">
-                    {item.name}
-                    {item.quantity > 1 && <span className="text-encre/50 ml-1">×{item.quantity}</span>}
-                  </span>
-                  <span className="font-semibold text-encre">{formatPrice(item.priceCents * item.quantity)}</span>
+            {/* Panier, avec vignettes */}
+            <RecapCard title="Ton panier">
+              <ul className="mt-2 space-y-3">
+                {items.map((item) => {
+                  const optionLine = cartItemOptionLine(item)
+                  return (
+                    <li key={item.id} className="flex items-center gap-3">
+                      <DishPhoto src={item.imageUrl} alt="" size={48} className="h-12 w-12" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[15px] font-bold leading-snug text-encre">
+                          <span className="tabular-nums">{item.quantity}&nbsp;×</span> {item.name}
+                        </p>
+                        {optionLine && <p className="line-clamp-2 text-[13px] leading-snug text-encre/70">{optionLine}</p>}
+                      </div>
+                      <span className="shrink-0 text-[15px] font-bold tabular-nums text-encre">
+                        {formatPrice(item.priceCents * item.quantity)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              <dl className="mt-4 space-y-1 border-t-2 border-sable pt-3 text-[15px]">
+                <div className="flex justify-between text-encre/75">
+                  <dt>Sous-total</dt>
+                  <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
                 </div>
-              ))}
-              <div className="border-t border-encre/8 pt-2 space-y-1">
-                <div className="flex justify-between text-sm text-encre/60">
-                  <span>Sous-total</span><span>{formatPrice(subtotal)}</span>
-                </div>
-                {deliveryFee > 0 && (
-                  <div className="flex justify-between text-sm text-encre/60">
-                    <span>Frais de livraison</span><span>{formatPrice(deliveryFee)}</span>
+                {type === "livraison" && (
+                  <div className="flex justify-between text-encre/75">
+                    <dt>Livraison</dt>
+                    <dd className="tabular-nums">{deliveryFee > 0 ? formatPrice(deliveryFee) : "Offerte"}</dd>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-encre pt-1">
-                  <span>Total</span>
-                  <span className="font-serif text-xl">{formatPrice(total)}</span>
+                <div className="flex items-baseline justify-between pt-1 font-extrabold text-encre">
+                  <dt className="text-[17px]">Total</dt>
+                  <dd className="text-[24px] tabular-nums">{formatPrice(total)}</dd>
                 </div>
-              </div>
-            </div>
+              </dl>
+            </RecapCard>
 
-            {/* Remarques */}
-            <label className="block bg-carte rounded-2xl p-4">
-              <span className="text-sm font-semibold text-encre mb-1.5 flex items-center gap-1">
-                Une remarque pour Nathy ?
-                <span className="text-encre/40 text-xs font-normal">(facultatif)</span>
-              </span>
+            <RecapCard title="Tes coordonnées" onEdit={() => goToStep(1)}>
+              <p className="text-[15px] leading-relaxed text-encre/80">
+                {name.trim()} · {phone.trim()}
+                {email.trim() && <span className="block break-all">{email.trim()}</span>}
+              </p>
+            </RecapCard>
+
+            <RecapCard title={type === "livraison" ? "Livraison" : "À emporter"} onEdit={() => goToStep(2)}>
+              {type === "livraison" ? (
+                <p className="text-[15px] leading-relaxed text-encre/80">
+                  {address.trim()}, {postalCode} {zone?.city}
+                  {selectedSlot && (
+                    <strong className="block font-bold text-encre">
+                      {formatDateLong(selectedSlot.slot_date)}, {formatTimeRange(selectedSlot.start_time, selectedSlot.end_time)}
+                    </strong>
+                  )}
+                </p>
+              ) : (
+                <p className="text-[15px] leading-relaxed text-encre/80">
+                  Nathy t&apos;appelle pour convenir de l&apos;heure de retrait.
+                </p>
+              )}
+            </RecapCard>
+
+            {/* Remarque */}
+            <div className="pt-2">
+              <label htmlFor="commande-remarque" className="mb-1.5 flex items-baseline justify-between gap-2">
+                <span className="text-[15px] font-bold text-encre">Un mot pour Nathy&nbsp;?</span>
+                <span className="text-[13px] text-encre/70">Facultatif</span>
+              </label>
               <textarea
+                id="commande-remarque"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 maxLength={500}
                 rows={3}
-                placeholder="Allergie, préférence de cuisson, digicode, instructions…"
-                className="w-full px-3 py-2.5 rounded-xl border-2 border-encre/15 bg-kwanga/40 text-sm text-encre placeholder:text-encre/35 focus:border-liboke focus:outline-none resize-none"
+                placeholder="Allergie, digicode, précision pour le livreur…"
+                className="w-full resize-none rounded-[18px] border-2 border-encre/15 bg-carte px-4 py-3 text-[16px] text-encre placeholder:text-encre/55 transition-colors duration-150 focus:border-liboke focus:outline-none"
               />
-            </label>
+            </div>
 
             {/* Mode de paiement */}
-            <div className="bg-carte rounded-2xl p-4 space-y-3">
-              <p className="text-sm font-semibold text-encre">Mode de paiement</p>
-              <div className="grid grid-cols-2 gap-3">
-                {(["carte", "especes"] as const).map((m) => {
-                  const Icon = m === "carte" ? CreditCard : Banknote
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPaymentMethod(m)}
-                      className={cn(
-                        "flex flex-col items-center gap-2 py-4 rounded-2xl border-2 font-semibold text-sm transition-all",
-                        paymentMethod === m
-                          ? "border-liboke bg-liboke/8 text-liboke"
-                          : "border-encre/15 text-encre/60 hover:border-encre/30 bg-carte"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {m === "carte" ? "Carte bancaire" : "Espèces"}
-                    </button>
-                  )
-                })}
-              </div>
-              {paymentMethod === "especes" && (
-                <p className="text-xs text-encre/50">
-                  {type === "livraison"
-                    ? "À régler en espèces auprès du livreur."
-                    : "À régler en espèces au retrait."
-                  }
+            <div className="pt-2">
+              <h2 className="mb-2 text-[15px] font-bold text-encre">Tu paies comment&nbsp;?</h2>
+              <ChoiceCards<Payment>
+                label="Mode de paiement"
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                options={[
+                  { value: "carte", label: "Carte bancaire", icon: CreditCard },
+                  { value: "especes", label: "Espèces", icon: Banknote },
+                ]}
+              />
+              <p className="mt-2.5 text-[14px] leading-relaxed text-encre/70">
+                {paymentMethod === "carte"
+                  ? "Paiement sécurisé par Stripe : tes données bancaires ne passent pas par nos serveurs."
+                  : type === "livraison"
+                    ? "Tu règles en espèces au livreur, à la réception. Prévois l'appoint si tu peux."
+                    : "Tu règles en espèces au moment du retrait."}
+              </p>
+            </div>
+
+            <div aria-live="assertive">
+              {globalError && (
+                <p role="alert" className="flex gap-2.5 rounded-[18px] bg-pili p-4 text-[15px] font-semibold leading-snug text-white">
+                  <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                  {globalError}
                 </p>
               )}
             </div>
 
-            {globalError && (
-              <p className="text-sm text-pili bg-pili/8 rounded-xl px-4 py-3">{globalError}</p>
-            )}
-
-            <Button size="lg" className="w-full" onClick={handlePay} disabled={submitting}>
-              {submitting
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> {paymentMethod === "carte" ? "Redirection Stripe…" : "Envoi de la commande…"}</>
-                : paymentMethod === "carte"
-                  ? <>Payer {formatPrice(total)} →</>
-                  : <>Confirmer la commande — {formatPrice(total)} →</>
-              }
+            <Button className="!mt-5 w-full" onClick={handlePay} disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                  {paymentMethod === "carte" ? "Vers le paiement…" : "Envoi en cours…"}
+                </>
+              ) : paymentMethod === "carte" ? (
+                <>Payer {formatPrice(total)}</>
+              ) : (
+                <>Confirmer · {formatPrice(total)}</>
+              )}
             </Button>
-
-            <p className="text-xs text-encre/40 text-center">
-              {paymentMethod === "carte"
-                ? "Paiement sécurisé par Stripe. Vos données bancaires ne transitent pas par nos serveurs."
-                : "Réglez directement en espèces à la réception de votre commande."
-              }
-            </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }
@@ -532,7 +652,7 @@ function SlotPicker({
   selectedId: string | null
   onSelect: (id: string) => void
 }) {
-  // Grouper par date (les slots arrivent déjà triés par date puis heure)
+  // Grouper par date (les créneaux arrivent déjà triés par date puis heure)
   const grouped: Record<string, DeliverySlot[]> = {}
   slots.forEach((s) => {
     if (!grouped[s.slot_date]) grouped[s.slot_date] = []
@@ -542,13 +662,13 @@ function SlotPicker({
 
   const selectedSlotDate = slots.find((s) => s.id === selectedId)?.slot_date ?? null
   const [activeDate, setActiveDate] = useState<string>(selectedSlotDate ?? dates[0])
-  // Si les slots ont été rechargés et que la date active a disparu, retomber sur la première
+  // Si les créneaux ont été rechargés et que la date active a disparu, retomber sur la première
   const shownDate = grouped[activeDate] ? activeDate : dates[0]
 
   return (
     <div className="space-y-4">
-      {/* ── Bandeau calendrier — scroll horizontal ─────────────── */}
-      <div className="flex overflow-x-auto scrollbar-none gap-2 -mx-1 px-1 pb-1">
+      {/* ── Jours — défilement horizontal ───────────────────────── */}
+      <div role="tablist" aria-label="Jour de livraison" className="scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
         {dates.map((date) => {
           const d = new Date(date + "T12:00:00")
           const active = date === shownDate
@@ -557,53 +677,52 @@ function SlotPicker({
             <button
               key={date}
               type="button"
+              role="tab"
+              aria-selected={active}
+              aria-label={formatDateLong(date)}
               onClick={() => setActiveDate(date)}
               className={cn(
-                "shrink-0 w-16 py-2.5 rounded-2xl border-2 flex flex-col items-center gap-0.5 transition-all",
-                active
-                  ? "border-liboke bg-liboke text-white shadow-[0_6px_16px_rgba(226,87,43,0.3)]"
-                  : "border-encre/12 bg-carte text-encre hover:border-encre/30"
+                "relative flex h-[84px] w-[68px] shrink-0 flex-col items-center justify-center rounded-[20px] transition-colors duration-150",
+                active ? "bg-encre text-kwanga" : "bg-carte text-encre ring-1 ring-inset ring-encre/12"
               )}
             >
-              <span className={cn("text-[10px] font-semibold uppercase", active ? "text-white/75" : "text-encre/45")}>
+              <span className={cn("text-[12px] font-bold uppercase", active ? "text-safou" : "text-encre/70")}>
                 {new Intl.DateTimeFormat("fr-FR", { weekday: "short" }).format(d).replace(".", "")}
               </span>
-              <span className="text-lg font-bold leading-none tabular-nums">
-                {d.getDate()}
-              </span>
-              <span className={cn("text-[10px] font-medium", active ? "text-white/75" : "text-encre/45")}>
+              <span className="text-[24px] font-extrabold leading-tight tabular-nums">{d.getDate()}</span>
+              <span className={cn("text-[12px] font-semibold", active ? "text-kwanga/85" : "text-encre/70")}>
                 {new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d).replace(".", "")}
               </span>
-              {/* Point : un créneau est choisi ce jour-là */}
-              {hasSelection && !active && (
-                <span className="h-1.5 w-1.5 rounded-full bg-liboke" />
-              )}
+              {/* Pastille : un créneau est choisi ce jour-là */}
+              {hasSelection && !active && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-liboke" />}
             </button>
           )
         })}
       </div>
 
-      {/* ── Horaires du jour sélectionné ────────────────────────── */}
+      {/* ── Horaires du jour affiché ────────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-encre/50 uppercase tracking-wider mb-2">
-          {formatDateLong(shownDate)}
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {grouped[shownDate].map((slot) => (
-            <button
-              key={slot.id}
-              type="button"
-              onClick={() => onSelect(slot.id)}
-              className={cn(
-                "py-3 px-3 rounded-xl border-2 text-sm font-medium transition-all text-center",
-                selectedId === slot.id
-                  ? "border-liboke bg-liboke/8 text-liboke"
-                  : "border-encre/15 bg-carte text-encre hover:border-encre/30"
-              )}
-            >
-              {formatTimeRange(slot.start_time, slot.end_time)}
-            </button>
-          ))}
+        <p className="mb-2 text-[14px] font-semibold text-encre/70 first-letter:uppercase">{formatDateLong(shownDate)}</p>
+        <div role="radiogroup" aria-label="Heure de livraison" className="grid grid-cols-2 gap-2">
+          {grouped[shownDate].map((slot) => {
+            const selected = selectedId === slot.id
+            return (
+              <button
+                key={slot.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => onSelect(slot.id)}
+                className={cn(
+                  "flex h-[52px] items-center justify-center gap-2 rounded-full text-[16px] font-bold tabular-nums transition-colors duration-150",
+                  selected ? "bg-encre text-kwanga" : "bg-carte text-encre ring-1 ring-inset ring-encre/12"
+                )}
+              >
+                {selected && <Check className="h-4 w-4 text-safou" strokeWidth={3.5} aria-hidden />}
+                {formatTimeRange(slot.start_time, slot.end_time)}
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
