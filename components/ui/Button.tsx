@@ -1,35 +1,45 @@
-"use client"
-
 import { ButtonHTMLAttributes, forwardRef } from "react"
 import { cn } from "@/lib/utils"
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost"
-  size?: "sm" | "md" | "lg"
-}
+type Variant = "primary" | "sombre" | "clair" | "contour" | "ghost" | "secondary"
+type Size = "md" | "lg"
 
 /**
- * Bouton premium — uppercase, rayon modéré (pas de pilule).
- * primary   : fond framboise, texte blanc
- * secondary : transparent, bordure claire subtile
- * ghost     : texte seul, hover discret
+ * Boutons en pilule, aplats pleins.
+ * primary : pilule liboke — UNE seule par écran, pour l'action principale.
+ *           Texte blanc en 19 px gras (contraste AA « grand texte »).
+ * sombre  : aplat encre — actions secondaires fortes
+ * clair   : aplat sable — actions discrètes
+ * contour : bordure encre — alternative à côté d'une action principale
+ * ghost   : texte seul
+ * Toutes les tailles gardent une zone tactile d'au moins 44 px.
  */
+export function buttonClass(variant: Variant = "primary", size: Size = "lg", className?: string) {
+  return cn(
+    "inline-flex items-center justify-center gap-2 rounded-full font-bold select-none",
+    "transition-[transform,background-color,opacity] duration-150 active:scale-[0.97]",
+    "disabled:opacity-45 disabled:pointer-events-none",
+    "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-encre",
+    variant === "primary" && "bg-liboke text-white text-[19px] hover:bg-braise",
+    variant === "sombre"  && "bg-encre text-kwanga hover:bg-encre/90",
+    variant === "clair"   && "bg-sable text-encre hover:bg-sable/70",
+    (variant === "contour" || variant === "secondary") && "border-2 border-encre text-encre hover:bg-encre/5",
+    variant === "ghost"   && "text-encre hover:bg-encre/5",
+    size === "md" && "h-12 px-5",
+    size === "lg" && "h-14 px-7",
+    variant !== "primary" && (size === "lg" ? "text-[17px]" : "text-[15px]"),
+    className
+  )
+}
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant
+  size?: Size
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-[0.08em] rounded-lg transition-all active:scale-[.98] disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-liboke",
-        variant === "primary"   && "bg-liboke text-white hover:bg-[#ff3a60]",
-        variant === "secondary" && "bg-transparent border border-encre/25 text-encre hover:bg-encre/8 hover:border-encre/40",
-        variant === "ghost"     && "text-encre hover:bg-encre/5",
-        size === "sm" && "h-9  px-4 text-[11px]",
-        size === "md" && "h-11 px-6 text-xs",
-        size === "lg" && "h-13 px-8 text-[13px]",
-        className
-      )}
-      {...props}
-    />
+  ({ className, variant = "primary", size = "lg", type = "button", ...props }, ref) => (
+    <button ref={ref} type={type} className={buttonClass(variant, size, className)} {...props} />
   )
 )
 Button.displayName = "Button"

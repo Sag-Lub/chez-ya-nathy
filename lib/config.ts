@@ -6,8 +6,10 @@
 
 export const branding = {
   name: "Chez ya Nathy",
-  tagline: "Cuisine congolaise et spécialités africaines maison",
+  tagline: "La cuisine congolaise, livrée avec cœur",
   logo: "/Logo_ChezYaNathy.png",
+  /** Zone affichée sur l'accueil — les codes postaux réels sont dans delivery_zones. */
+  area: "Lyon et alentours",
 }
 
 export const restaurantSettings = {
@@ -20,6 +22,22 @@ export const restaurantSettings = {
   pickupAddress: "",
   /** Politique d'annulation — à renseigner */
   cancellationPolicy: "",
+}
+
+/**
+ * Adresse qui reçoit le lien magique du tableau de bord cuisine.
+ * Ce n'est PAS ce qui donne les droits : les droits admin viennent
+ * uniquement de profiles.role = 'admin' (fonction SQL is_admin()).
+ */
+export const adminLoginEmail = "chezyanathy@gmail.com"
+
+/** Clés de stockage navigateur (rien de sensible n'y est conservé). */
+export const storageKeys = {
+  onboardingSeen: "nathy-onboarding-seen",
+  cart: "chez-ya-nathy-cart",
+  /** public_token de la dernière commande — ouvre l'onglet « Suivi ». */
+  lastOrderToken: "chez-ya-nathy-derniere-commande",
+  kitchenSound: "chez-ya-nathy-cuisine-son",
 }
 
 /**

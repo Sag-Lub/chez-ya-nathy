@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { storageKeys } from "@/lib/config";
 
 export type CartItem = {
   /** Clé composite unique : dishId + combo options (ex: "uuid_fort_optId1_optId2") */
@@ -78,6 +79,6 @@ export const useCartStore = create<CartState>()(
       totalCents: () =>
         get().items.reduce((sum, i) => sum + i.priceCents * i.quantity, 0),
     }),
-    { name: "nathy-food-cart" }
+    { name: storageKeys.cart }
   )
 );

@@ -1,78 +1,128 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Palette sombre premium — Chez ya Nathy ──────────────────
-     liboke  : accent framboise (CTA, prix, liens)
-     safou   : or — touches limitées (badges région)
-     pili    : alerte / précommande (rouge doux lisible sur sombre)
-     feuille : succès
-     kwanga  : fond de page (noir brun profond)
-     encre   : texte principal (blanc chaud) — les /10 /15 servent
-               de bordures subtiles claires sur fond sombre
-     carte   : surface des cartes et panneaux                      */
-  --color-liboke:  #f52e53;
+  /* ── Palette Chez ya Nathy ───────────────────────────────────
+     liboke  : couleur principale — boutons, accents, états actifs
+     braise  : liboke foncé — petit texte d'accent sur fond clair (contraste AA)
+     safou   : jaune doré — badges, mises en avant, vapeur du logo
+     pili    : terracotta — piquant, pastilles de nombre, alertes douces
+     feuille : vert — végétarien, « nouveau » (moins de 10 % d'une page)
+     kwanga  : crème — fond principal (jamais de blanc pur)
+     encre   : brun — texte et contours (jamais de noir pur)
+     carte   : surface des cartes posées sur le fond kwanga
+     sable   : chips, champs et plateaux                              */
+  --color-liboke:  #E2572B;
+  --color-braise:  #BC4219;
   --color-safou:   #F4A93B;
-  --color-pili:    #ff8f85;
-  --color-feuille: #7fbf77;
-  --color-kwanga:  #0b0708;
-  --color-encre:   #f2ebe8;
-  --color-carte:   #160c0e;
-  --color-carte2:  #211316;
+  --color-pili:    #B23A2E;
+  --color-feuille: #4F7A4A;
+  --color-kwanga:  #FAF3E8;
+  --color-encre:   #2B1B12;
+  --color-carte:   #FFFCF6;
+  --color-sable:   #F2E4CC;
 
-  /* Typographie */
-  --font-sans:   var(--font-inter);
-  --font-serif:  var(--font-display);
+  --font-sans:  var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-display), ui-serif, Georgia, serif;
+
+  --ease-doux: cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
-/* Tokens verre — éléments flottants (nav, panier, barres d'action) */
+/* Verre : uniquement pour ce qui flotte au-dessus du contenu
+   (navigation basse, panneau du panier, barre d'action de la fiche plat). */
 :root {
-  --glass-bg:       rgba(15, 9, 11, 0.78);
-  --glass-border:   rgba(255, 255, 255, 0.10);
-  --glass-bg-dark:  rgba(5, 2, 3, 0.72);
+  --verre-fond: rgba(43, 27, 18, 0.80);
+  --verre-bord: rgba(250, 243, 232, 0.16);
+}
 
-  --overlay-hero:   rgba(7, 3, 4, 0.62);
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background-color: var(--color-kwanga);
   color: var(--color-encre);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Utilitaires verre — barre action fiche plat, CartSheet, icône panier */
-@utility glass {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter:         blur(24px) saturate(160%);
-  border: 1px solid var(--glass-border);
-}
-@utility glass-sm {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  backdrop-filter:         blur(12px) saturate(150%);
-  border: 1px solid var(--glass-border);
-}
-@utility glass-footer {
-  background: rgba(11, 7, 8, 0.90);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter:         blur(24px) saturate(160%);
-  border-top: 1px solid var(--glass-border);
+/* Titres en Fraunces : gras, arrondis, jamais en petit corps. */
+@utility titre {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variation-settings: "SOFT" 100;
 }
 
-/* Fallback Safari ancien / WebView sans backdrop-filter */
-@supports not (backdrop-filter: blur(1px)) {
-  .glass, .glass-sm { background: rgba(11, 7, 8, 0.97); }
-  .glass-footer      { background: rgba(11, 7, 8, 0.98); }
+@utility verre {
+  background: var(--verre-fond);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  border: 1px solid var(--verre-bord);
 }
 
-/* Animations sobres — respectent prefers-reduced-motion */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(14px); }
+/* Repli sans flou (vieux Safari, WebView) : un aplat encre presque opaque. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .verre {
+    background: rgba(43, 27, 18, 0.97);
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Marge basse des pages client : place pour la navigation flottante. */
+@utility pb-nav {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+}
+
+/* ── Mouvements sobres (150 à 250 ms) ───────────────────────── */
+@keyframes apparait {
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@utility animate-fade-up {
-  animation: fade-up 0.7s ease-out both;
+@keyframes fondu {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
+@keyframes monte {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pouls {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(1.9); opacity: 0; }
+}
+
+@utility anim-apparait {
+  animation: apparait 0.25s var(--ease-doux) both;
+}
+@utility anim-fondu {
+  animation: fondu 0.2s ease-out both;
+}
+@utility anim-monte {
+  animation: monte 0.25s var(--ease-doux) both;
+}
+@utility anim-pop {
+  animation: pop 0.25s var(--ease-doux) both;
+}
+@utility anim-pouls {
+  animation: pouls 1.8s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up { animation: none; }
-  * { transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
