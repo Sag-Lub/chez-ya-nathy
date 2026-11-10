@@ -2,81 +2,66 @@
 
 import { Minus, Plus, Trash2 } from "lucide-react"
 import { useCartStore, type CartItem as CartItemType } from "@/store/cart"
-import { formatPrice, dishImageClass } from "@/lib/utils"
+import { formatPrice } from "@/lib/utils"
+import { spiceLabel } from "@/lib/labels"
+import { DishPhoto } from "@/components/ui/DishPhoto"
 
-const SPICE_LABELS: Record<string, string> = {
-  doux:              "Doux",
-  moyen:             "Moyen 🌶",
-  fort:              "Fort 🌶🌶",
-  pili_pili_a_part:  "Pili-pili 🌶🌶🌶",
-}
-
-export function CartItem({ item }: { item: CartItemType }) {
-  const { updateQuantity } = useCartStore()
-
-  const optionLine = [
-    item.options?.["spice"]          && SPICE_LABELS[item.options["spice"]],
+/** Ligne lisible des choix d'un article : piquant, accompagnement, suppléments. */
+export function cartItemOptionLine(item: CartItemType): string {
+  return [
+    spiceLabel(item.options?.["spice"]),
     item.options?.["accompagnement"],
     item.options?.["suppléments"],
   ]
     .filter(Boolean)
     .join(" · ")
+}
+
+export function CartItem({ item }: { item: CartItemType }) {
+  const updateQuantity = useCartStore((s) => s.updateQuantity)
+  const optionLine = cartItemOptionLine(item)
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Vignette ronde */}
-      <div className="relative h-14 w-14 shrink-0 rounded-full overflow-hidden ring-2 ring-encre/15 shadow-sm">
-        {item.imageUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            className={dishImageClass(item.imageUrl)}
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-safou/40 to-liboke/30 flex items-center justify-center text-xl opacity-30 select-none">
-            🍽
-          </div>
-        )}
-      </div>
+    <div className="flex items-start gap-3">
+      <DishPhoto src={item.imageUrl} alt="" size={64} className="h-16 w-16" />
 
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-encre text-sm leading-snug line-clamp-1">{item.name}</p>
-        {optionLine && (
-          <p className="text-xs text-encre/50 mt-0.5 line-clamp-1">{optionLine}</p>
-        )}
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 text-[16px] font-extrabold leading-snug text-encre">{item.name}</p>
+        {optionLine && <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-encre/70">{optionLine}</p>}
 
-        {/* Quantité */}
-        <div className="flex items-center gap-2 mt-1.5">
-          <div className="flex items-center gap-1 bg-encre/8 rounded-full px-1.5 py-0.5">
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <p className="text-[17px] font-extrabold tabular-nums text-encre">
+            {formatPrice(item.priceCents * item.quantity)}
+          </p>
+
+          {/* Quantité */}
+          <div className="flex shrink-0 items-center rounded-full bg-sable">
             <button
+              type="button"
               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-              className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-encre/10 transition-colors"
-              aria-label="Diminuer"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-encre transition-colors duration-150 hover:bg-encre/10"
+              aria-label={item.quantity === 1 ? `Retirer ${item.name} du panier` : `Diminuer la quantité de ${item.name}`}
             >
-              {item.quantity === 1
-                ? <Trash2 className="h-3.5 w-3.5 text-pili" />
-                : <Minus  className="h-3.5 w-3.5 text-encre" />
-              }
+              {item.quantity === 1 ? (
+                <Trash2 className="h-[18px] w-[18px] text-pili" aria-hidden />
+              ) : (
+                <Minus className="h-[18px] w-[18px]" strokeWidth={2.6} aria-hidden />
+              )}
             </button>
-            <span className="text-sm font-semibold text-encre w-4 text-center select-none">
+            <span className="w-6 select-none text-center text-[16px] font-extrabold tabular-nums text-encre">
               {item.quantity}
             </span>
             <button
-              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-              className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-encre/10 transition-colors"
-              aria-label="Augmenter"
+              type="button"
+              onClick={() => updateQuantity(item.id, Math.min(20, item.quantity + 1))}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-encre transition-colors duration-150 hover:bg-encre/10"
+              aria-label={`Augmenter la quantité de ${item.name}`}
             >
-              <Plus className="h-3.5 w-3.5 text-encre" />
+              <Plus className="h-[18px] w-[18px]" strokeWidth={2.6} aria-hidden />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Prix ligne */}
-      <span className="font-semibold text-encre text-sm shrink-0">
-        {formatPrice(item.priceCents * item.quantity)}
-      </span>
     </div>
   )
 }
