@@ -115,6 +115,28 @@ export type Order = {
   order_items?: OrderItem[]
 }
 
+/** Ce que /api/track/[token] renvoie à la page de suivi (aucune donnée sensible). */
+export type TrackedOrder = {
+  status: OrderStatus
+  type: OrderType
+  first_name: string
+  address: string | null
+  postal_code: string | null
+  subtotal_cents: number
+  delivery_fee_cents: number
+  total_cents: number
+  payment_method: PaymentMethod
+  created_at: string
+  updated_at: string
+  slot: { slot_date: string; start_time: string; end_time: string } | null
+  order_items: Pick<OrderItem, 'id' | 'dish_name' | 'unit_price_cents' | 'quantity' | 'spice' | 'options'>[]
+}
+
+/** Commande telle que le tableau de bord cuisine la lit (avec ses lignes et son créneau). */
+export type KitchenOrder = Order & {
+  delivery_slots?: { slot_date: string; start_time: string; end_time: string } | null
+}
+
 // Placeholder pour le générique Supabase.
 // Pour regénérer : npx supabase gen types typescript --project-id <project-id> > lib/types.ts
 // Le type Database doit inclure Relationships: [] sur chaque table pour satisfaire GenericTable.
