@@ -32,6 +32,8 @@ interface DishPhotoProps {
   alt: string
   /** Largeur affichée en pixels (sert à choisir la bonne taille de fichier). */
   size: number
+  /** Attribut `sizes` précis quand la largeur change selon l'écran (par défaut : `${size}px`). */
+  sizes?: string
   /** Couleur du plateau quand il n'y a pas de photo. */
   tone?: Tone
   priority?: boolean
@@ -42,7 +44,7 @@ interface DishPhotoProps {
  * Photo de plat ronde. Sans vraie photo : un plateau de couleur
  * avec une illustration, jamais un emoji.
  */
-export function DishPhoto({ src, alt, size, tone = "safou", priority = false, className }: DishPhotoProps) {
+export function DishPhoto({ src, alt, size, sizes, tone = "safou", priority = false, className }: DishPhotoProps) {
   const cutout = src ? isCutout(src) : false
 
   return (
@@ -60,7 +62,7 @@ export function DishPhoto({ src, alt, size, tone = "safou", priority = false, cl
           src={src}
           alt={alt}
           fill
-          sizes={`${size}px`}
+          sizes={sizes ?? `${size}px`}
           priority={priority}
           className={cutout ? "object-contain p-[12%] mix-blend-multiply" : "object-cover"}
         />

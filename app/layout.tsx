@@ -1,17 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { FIRST_VISIT_SCRIPT } from "@/components/onboarding/first-visit";
 
-// Fraunces pour les titres (axe SOFT : formes arrondies, proches du lettrage du logo),
-// Inter pour le texte et l'interface.
-const fraunces = Fraunces({
+// Fraunces pour les titres : une seule graisse (900), formes arrondies (axe SOFT à 100),
+// taille optique automatique. Le fichier est hébergé avec l'app : 30 Ko au lieu des
+// 118 Ko de la police variable complète. Licence SIL Open Font License.
+const fraunces = localFont({
+  src: "./fonts/fraunces-black-soft.woff2",
   variable: "--font-display",
-  subsets: ["latin"],
-  axes: ["SOFT", "opsz"],
+  weight: "900",
+  style: "normal",
   display: "swap",
+  fallback: ["ui-serif", "Georgia", "serif"],
+  adjustFontFallback: "Times New Roman",
 });
 
+// Inter pour le texte et l'interface.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

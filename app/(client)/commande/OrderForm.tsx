@@ -17,7 +17,6 @@ import {
   Store,
 } from "lucide-react"
 import { useCartStore } from "@/store/cart"
-import { createClient } from "@/lib/supabase/client"
 import { formatPrice, formatDateLong, formatTimeRange, cn } from "@/lib/utils"
 import { canOrderDishForSlot } from "@/lib/preorder"
 import { restaurantSettings } from "@/lib/config"
@@ -160,7 +159,6 @@ export function OrderForm() {
   // Le panier vit dans le navigateur : on attend d'y être avant d'afficher quoi que ce soit
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
-  const [supabase] = useState(() => createClient())
   const [step, setStep] = useState<Step>(1)
   const [submitting, setSubmitting] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
@@ -219,6 +217,10 @@ export function OrderForm() {
     setZone(null)
     setSlots([])
     setSelectedSlotId(null)
+
+    // Chargé à la demande : la page s'affiche sans attendre le client Supabase
+    const { createClient } = await import("@/lib/supabase/client")
+    const supabase = createClient()
 
     const { data } = await supabase
       .from("delivery_zones")

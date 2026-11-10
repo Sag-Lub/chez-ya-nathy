@@ -46,7 +46,8 @@ export function HomeHero({ dish }: { dish: Dish | null }) {
         <DishPhoto
           src={dish?.image_url}
           alt={dish?.name ?? ""}
-          size={220}
+          size={168}
+          sizes="(min-width: 1024px) 260px, 168px"
           priority
           tone="safou"
           className="h-[min(38vw,168px)] w-[min(38vw,168px)] ring-[6px] ring-kwanga shadow-[0_16px_28px_rgba(43,27,18,0.28)] lg:h-[260px] lg:w-[260px]"
