@@ -1,0 +1,216 @@
+/* ─────────────────────────────────────────────────────────────
+   Animations de l'onboarding — uniquement transform et opacity
+   (plus un tracé en pointillés), pour rester fluide sur un
+   téléphone d'entrée de gamme.
+───────────────────────────────────────────────────────────── */
+
+/* ── Écran de bienvenue ─────────────────────────────────────── */
+
+/* La main remonte et s'ouvre (pivot au poignet). */
+.main {
+  transform-origin: 170px 520px;
+  animation: main-monte 0.6s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+}
+@keyframes main-monte {
+  from { transform: translateY(300px) rotate(-20deg) scale(0.86); opacity: 0; }
+  35%  { opacity: 1; }
+  to   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+}
+
+/* Les volutes de vapeur se dessinent de bas en haut. */
+.volute {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: volute-trace 0.55s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+}
+@keyframes volute-trace {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Le lettrage entre lettre par lettre, avec un léger rebond. */
+.lettre {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: lettre-rebond 0.38s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
+}
+@keyframes lettre-rebond {
+  from { opacity: 0; transform: translateY(46px) scale(0.5); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.goutte {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  opacity: 0;
+  animation: goutte-pop 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
+}
+@keyframes goutte-pop {
+  from { opacity: 0; transform: scale(0.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.accroche {
+  opacity: 0;
+  animation: accroche-entre 0.35s ease-out forwards;
+}
+@keyframes accroche-entre {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.frise {
+  animation: frise-entre 0.5s ease-out both;
+}
+@keyframes frise-entre {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Volet circulaire qui part de la main et ouvre la première slide. */
+.volet {
+  clip-path: circle(0px at var(--ox, 50%) var(--oy, 35%));
+  animation: volet-ouvre 0.48s cubic-bezier(0.5, 0, 0.3, 1) forwards;
+}
+@keyframes volet-ouvre {
+  to { clip-path: circle(150vmax at var(--ox, 50%) var(--oy, 35%)); }
+}
+
+.sortie {
+  animation: sortie 0.25s ease-in forwards;
+}
+@keyframes sortie {
+  to { opacity: 0; }
+}
+
+/* ── Slides : boucles d'illustration ────────────────────────── */
+
+/* Les boucles ne tournent que sur la slide affichée. */
+.illo * {
+  animation-play-state: paused;
+}
+.illo[data-active="true"] * {
+  animation-play-state: running;
+}
+
+/* Slide 1 — la vapeur monte en boucle */
+.vapeurBoucle {
+  animation: vapeur-monte 2.8s ease-in-out infinite;
+}
+@keyframes vapeur-monte {
+  0%   { opacity: 0;   transform: translateY(14px); }
+  30%  { opacity: 0.95; }
+  70%  { opacity: 0.95; }
+  100% { opacity: 0;   transform: translateY(-22px); }
+}
+.flotte {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flotte 4.5s ease-in-out infinite alternate;
+}
+@keyframes flotte {
+  from { transform: rotate(-3deg); }
+  to   { transform: rotate(3deg); }
+}
+
+/* Slide 2 — le curseur va de doux à fort */
+.curseur {
+  animation: curseur-glisse 3.2s cubic-bezier(0.6, 0, 0.4, 1) infinite alternate;
+}
+@keyframes curseur-glisse {
+  0%, 12%  { transform: translateX(0); }
+  88%, 100% { transform: translateX(236px); }
+}
+.jauge {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: jauge-remplit 3.2s cubic-bezier(0.6, 0, 0.4, 1) infinite alternate;
+}
+@keyframes jauge-remplit {
+  0%, 12%  { transform: scaleX(0.02); }
+  88%, 100% { transform: scaleX(1); }
+}
+.piment {
+  transform-box: fill-box;
+  transform-origin: 80% 10%;
+  animation: piment-balance 3.2s ease-in-out infinite alternate;
+}
+@keyframes piment-balance {
+  from { transform: rotate(-4deg); }
+  to   { transform: rotate(5deg); }
+}
+
+/* Slide 3 — la route défile, les roues tournent, le repère rebondit */
+.route {
+  animation: route-defile 0.9s linear infinite;
+}
+@keyframes route-defile {
+  to { stroke-dashoffset: 68; }
+}
+.roue {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: roue-tourne 0.9s linear infinite;
+}
+@keyframes roue-tourne {
+  to { transform: rotate(360deg); }
+}
+.scooter {
+  animation: scooter-vibre 0.45s ease-in-out infinite alternate;
+}
+@keyframes scooter-vibre {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2.5px); }
+}
+.repere {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: repere-rebond 1.4s cubic-bezier(0.4, 0, 0.4, 1) infinite alternate;
+}
+@keyframes repere-rebond {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-14px); }
+}
+.vitesse {
+  animation: vitesse-file 0.9s linear infinite;
+}
+@keyframes vitesse-file {
+  from { transform: translateX(26px); opacity: 0; }
+  40%  { opacity: 0.9; }
+  to   { transform: translateX(-34px); opacity: 0; }
+}
+
+/* Texte de la slide : entre quand la slide devient active */
+.texte[data-active="true"] > * {
+  animation: accroche-entre 0.25s ease-out both;
+}
+.texte[data-active="true"] > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+/* Avec prefers-reduced-motion : un simple fondu, pas de boucle. */
+@media (prefers-reduced-motion: reduce) {
+  .main, .lettre, .goutte, .accroche, .frise {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .volute {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .volet {
+    clip-path: none;
+    animation: fondu-simple 0.3s ease-out both;
+  }
+  .illo * {
+    animation: none !important;
+  }
+}
+@keyframes fondu-simple {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
