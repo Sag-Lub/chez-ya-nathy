@@ -1,4 +1,4 @@
-// Généré manuellement depuis le schéma 0001_init_nathy_food.sql
+// Écrit à la main à partir des migrations de supabase/migrations/ (0001 à 0008).
 // Remplace avec : npx supabase gen types typescript --project-id pxnqthmudmwybvuoizxh > lib/types.ts
 
 export type SpiceLevel = 'doux' | 'moyen' | 'fort' | 'pili_pili_a_part'
