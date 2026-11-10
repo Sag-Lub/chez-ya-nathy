@@ -43,6 +43,11 @@ export type Dish = {
   available_days: number[] | null
   culinary_origin: CulinaryOrigin | null
   is_featured: boolean
+  /**
+   * Allergènes du plat (migration 0006).
+   * null = pas encore renseigné par la cuisine ; [] = aucun des 14 allergènes réglementés.
+   */
+  allergens: string[] | null
   sort_order: number
   created_at: string
   dish_options?: DishOption[]
@@ -117,12 +122,26 @@ export type Order = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rel = any[]
 
+export type Profile = {
+  id: string
+  full_name: string | null
+  phone: string | null
+  role: 'client' | 'admin'
+  created_at: string
+}
+
 type DishRow = Omit<Dish, 'dish_options'>
 type OrderRow = Omit<Order, 'order_items'> & { stripe_payment_intent: string | null }
 
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row:           Profile
+        Insert:        Partial<Profile> & { id: string }
+        Update:        Partial<Profile>
+        Relationships: Rel
+      }
       categories: {
         Row:           Category
         Insert:        Omit<Category, 'id'>

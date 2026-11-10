@@ -39,3 +39,21 @@ export function statusSentence(status: OrderStatus, type: OrderType = "livraison
     case "annulee":      return "Cette commande a été annulée."
   }
 }
+
+/** Les 14 allergènes à déclaration obligatoire (règlement européen INCO). */
+export const ALLERGENS = [
+  "Gluten",
+  "Crustacés",
+  "Œufs",
+  "Poisson",
+  "Arachides",
+  "Soja",
+  "Lait",
+  "Fruits à coque",
+  "Céleri",
+  "Moutarde",
+  "Sésame",
+  "Sulfites",
+  "Lupin",
+  "Mollusques",
+] as const

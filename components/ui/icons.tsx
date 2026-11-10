@@ -20,11 +20,22 @@ export function PiliIcon({ className }: { className?: string }) {
 }
 
 /** Niveau de piquant : de zéro à trois piments. */
-export function PiliScale({ level, className }: { level: 0 | 1 | 2 | 3; className?: string }) {
+export function PiliScale({
+  level,
+  onDark = false,
+  className,
+}: {
+  level: 0 | 1 | 2 | 3
+  /** true quand l'échelle est posée sur un aplat encre. */
+  onDark?: boolean
+  className?: string
+}) {
+  const on = onDark ? "text-safou" : "text-pili"
+  const off = onDark ? "text-kwanga/25" : "text-encre/15"
   return (
     <span className={cn("inline-flex items-center -space-x-1", className)} aria-hidden>
       {[1, 2, 3].map((n) => (
-        <PiliIcon key={n} className={cn("h-5 w-5", n <= level ? "text-pili" : "text-encre/15")} />
+        <PiliIcon key={n} className={cn("h-5 w-5", n <= level ? on : off)} />
       ))}
     </span>
   )

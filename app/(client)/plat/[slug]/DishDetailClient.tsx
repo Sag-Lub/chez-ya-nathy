@@ -1,24 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, CalendarDays, Flame, Minus, Plus, ShoppingBag } from "lucide-react"
+import { ArrowLeft, BookOpen, CalendarDays, Check, MapPin, Minus, Plus, TriangleAlert } from "lucide-react"
 import { useCartStore } from "@/store/cart"
-import { formatPrice, cn, dishImageClass, isWeekendOnly, culinaryOriginLabel } from "@/lib/utils"
+import { formatPrice, cn, isWeekendOnly, culinaryOriginLabel } from "@/lib/utils"
 import { getNextAvailableWeekendDate, formatWeekendDate } from "@/lib/preorder"
+import { SPICE_LEVELS } from "@/lib/labels"
 import { Button } from "@/components/ui/Button"
+import { DishPhoto } from "@/components/ui/DishPhoto"
+import { PiliScale } from "@/components/ui/icons"
 import type { Dish, SpiceLevel, Story } from "@/lib/types"
-
-const SPICE_OPTIONS: { value: SpiceLevel; label: string; color: string }[] = [
-  { value: "doux",             label: "Doux",              color: "border-feuille  text-feuille  bg-feuille/10"  },
-  { value: "moyen",            label: "Moyen 🌶",          color: "border-safou    text-safou    bg-safou/10"    },
-  { value: "fort",             label: "Fort 🌶🌶",         color: "border-liboke   text-liboke   bg-liboke/10"   },
-  { value: "pili_pili_a_part", label: "Pili-pili 🌶🌶🌶",  color: "border-pili     text-pili     bg-pili/10"     },
-]
 
 interface Props {
   dish: Dish & { stories?: Story[] }
 }
+
+const noopSubscribe = () => () => {}
 
 export function DishDetailClient({ dish }: Props) {
   const router = useRouter()
@@ -34,14 +32,25 @@ export function DishDetailClient({ dish }: Props) {
   const [quantity,       setQuantity]       = useState(1)
   const [added,          setAdded]          = useState(false)
 
-  const weekendDish     = isWeekendOnly(dish.available_days)
-  const nextWeekendDate = weekendDish ? getNextAvailableWeekendDate() : null
+  const soldOut     = !dish.is_available
+  const weekendDish = isWeekendOnly(dish.available_days)
+  // Date calculée dans le navigateur uniquement (heure de Paris, change à l'heure limite)
+  const nextWeekendDate = useSyncExternalStore(
+    noopSubscribe,
+    () => (weekendDish ? getNextAvailableWeekendDate() : null),
+    () => null
+  )
 
   const extrasPrice = [...selectedExtras].reduce((sum, id) => {
     return sum + (extras.find(o => o.id === id)?.extra_price_cents ?? 0)
   }, 0)
   const unitPrice  = dish.price_cents + extrasPrice
   const totalPrice = unitPrice * quantity
+
+  function goBack() {
+    if (window.history.length > 1) router.back()
+    else router.push("/")
+  }
 
   function handleAdd() {
     const baseOpt = baseOptions.find(o => o.id === selectedBase)
@@ -73,146 +82,157 @@ export function DishDetailClient({ dish }: Props) {
     })
 
     setAdded(true)
-    setTimeout(() => router.back(), 900)
+    setTimeout(goBack, 800)
   }
 
+  const origin = culinaryOriginLabel(dish.culinary_origin)
+
   return (
-    <div className="min-h-screen bg-kwanga">
-      {/* ─── Hero — photo circulaire centrée ───────────────────── */}
-      <div className="relative max-w-lg mx-auto px-5 pt-4">
+    <div className="min-h-screen overflow-x-clip bg-kwanga">
+      {/* ─── Plateau de couleur : la photo déborde en bas ────────── */}
+      <div className="relative h-[196px] rounded-b-[44px] bg-safou">
         <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-5 z-20 bg-carte border border-encre/10 rounded-full p-2.5 shadow-sm transition-opacity hover:opacity-70"
-          aria-label="Retour"
+          type="button"
+          onClick={goBack}
+          aria-label="Retour au menu"
+          className="absolute left-4 top-[max(0.75rem,env(safe-area-inset-top))] flex h-12 w-12 items-center justify-center rounded-full bg-kwanga text-encre transition-transform duration-150 active:scale-95"
         >
-          <ArrowLeft className="h-5 w-5 text-encre" />
+          <ArrowLeft className="h-6 w-6" aria-hidden />
         </button>
+      </div>
 
-        <div className="flex flex-col items-center pt-10">
-          {/* Photo ronde */}
-          <div className="relative h-60 w-60 rounded-full overflow-hidden shadow-[0_24px_48px_rgba(43,27,18,0.25)]">
-            {dish.image_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={dish.image_url}
-                alt={dish.name}
-                className={dishImageClass(dish.image_url)}
-              />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-safou/40 to-liboke/30 flex items-center justify-center text-6xl opacity-25 select-none">
-                🍽
-              </div>
+      <div className="mx-auto max-w-lg px-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))]">
+        <div className="-mt-[150px] flex flex-col items-center">
+          <DishPhoto
+            src={dish.image_url}
+            alt={dish.name}
+            size={280}
+            priority
+            tone="liboke"
+            className={cn(
+              "h-[264px] w-[264px] ring-[8px] ring-kwanga shadow-[0_22px_40px_rgba(43,27,18,0.28)]",
+              soldOut && "grayscale"
             )}
-          </div>
+          />
 
-          {/* Quantité — pill sous la photo */}
-          <div className="flex items-center gap-3 bg-carte border border-encre/10 rounded-full px-2 py-1 -mt-5 relative z-10 shadow-[0_6px_16px_rgba(43,27,18,0.12)]">
+          {/* Quantité — pilule à cheval sur la photo */}
+          <div className="relative z-10 -mt-7 flex items-center gap-1 rounded-full bg-encre p-1.5 text-kwanga shadow-[0_8px_18px_rgba(43,27,18,0.25)]">
             <button
+              type="button"
               onClick={() => setQuantity(q => Math.max(1, q - 1))}
-              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-encre/8 transition-colors"
-              aria-label="Diminuer"
+              disabled={quantity <= 1 || soldOut}
+              aria-label="Diminuer la quantité"
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-150 hover:bg-kwanga/10 disabled:opacity-35"
             >
-              <Minus className="h-4 w-4 text-liboke" />
+              <Minus className="h-5 w-5" strokeWidth={2.6} aria-hidden />
             </button>
-            <span className="font-bold text-encre w-5 text-center tabular-nums">{quantity}</span>
+            <span className="w-9 text-center text-[20px] font-extrabold tabular-nums" aria-live="polite" aria-label={`Quantité : ${quantity}`}>
+              {quantity}
+            </span>
             <button
-              onClick={() => setQuantity(q => q + 1)}
-              className="h-9 w-9 flex items-center justify-center rounded-full bg-liboke hover:bg-liboke/90 transition-colors"
-              aria-label="Augmenter"
+              type="button"
+              onClick={() => setQuantity(q => Math.min(20, q + 1))}
+              disabled={soldOut}
+              aria-label="Augmenter la quantité"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-kwanga text-encre transition-transform duration-150 active:scale-95 disabled:opacity-35"
             >
-              <Plus className="h-4 w-4 text-white" />
+              <Plus className="h-5 w-5" strokeWidth={2.6} aria-hidden />
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ─── Contenu ────────────────────────────────────────────── */}
-      <div className="max-w-lg mx-auto px-5 pt-5 pb-36">
-        {/* Titre + région — centrés */}
-        <div className="mb-4 text-center">
-          <div className="flex items-center justify-center gap-1.5 flex-wrap mb-2">
-            {culinaryOriginLabel(dish.culinary_origin) && (
-              <span className="inline-block bg-encre/10 text-encre/65 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                {culinaryOriginLabel(dish.culinary_origin)}
-              </span>
+        {/* ─── Titre, origine, prix ─────────────────────────────── */}
+        <div className="mt-5 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {origin && (
+              <span className="rounded-full bg-sable px-3 py-1.5 text-[13px] font-bold text-encre">{origin}</span>
             )}
             {dish.region && (
-              <span className="inline-block bg-safou text-encre text-[10px] font-bold px-2.5 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1 rounded-full bg-safou px-3 py-1.5 text-[13px] font-bold text-encre">
+                <MapPin className="h-3.5 w-3.5" aria-hidden />
                 {dish.region}
               </span>
             )}
-            {isWeekendOnly(dish.available_days) && (
-              <span className="inline-flex items-center gap-1 bg-pili/10 text-pili text-[10px] font-bold px-2.5 py-1 rounded-full">
-                <CalendarDays className="h-3 w-3" />
-                Week-end sur précommande
+            {weekendDish && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-pili px-3 py-1.5 text-[13px] font-bold text-white">
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                Week-end
               </span>
             )}
           </div>
-          <h1 className="font-serif text-2xl font-bold text-encre leading-tight text-balance">
-            {dish.name}
-          </h1>
+
+          <h1 className="titre mt-3 text-[38px] text-encre text-balance">{dish.name}</h1>
           {dish.subtitle && (
-            <p className="text-sm font-medium text-liboke/70 mt-0.5">{dish.subtitle}</p>
+            <p className="mt-2 text-[17px] font-semibold text-encre/75">{dish.subtitle}</p>
           )}
-          <p className="mt-1 font-serif text-xl font-semibold text-liboke">
-            {formatPrice(dish.price_cents)}
-          </p>
+          <p className="mt-2 text-[24px] font-extrabold tabular-nums text-encre">{formatPrice(dish.price_cents)}</p>
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-encre/70 leading-relaxed mb-6 text-center">
-          {dish.description}
-        </p>
+        <p className="mt-4 text-center text-[16px] leading-relaxed text-encre/80">{dish.description}</p>
+
+        {soldOut && (
+          <p className="mt-5 rounded-[22px] bg-encre px-5 py-4 text-center text-[16px] font-bold text-kwanga">
+            Épuisé pour aujourd&apos;hui. Reviens vite, Nathy en refait.
+          </p>
+        )}
 
         {/* Explication précommande week-end */}
-        {isWeekendOnly(dish.available_days) && (
-          <div className="bg-pili/8 border border-pili/15 rounded-2xl p-4 mb-6 text-center">
-            <p className="text-sm text-encre/75 leading-relaxed">
-              Ce plat demande une préparation plus longue. Vous pouvez le
-              précommander dès maintenant pour le samedi ou le dimanche.
+        {weekendDish && !soldOut && (
+          <div className="mt-5 flex gap-3 rounded-[22px] bg-sable p-4">
+            <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-pili" aria-hidden />
+            <p className="text-[15px] leading-relaxed text-encre">
+              Ce plat mijote longtemps&nbsp;: il se précommande pour samedi ou dimanche.
+              {nextWeekendDate && (
+                <strong className="mt-1 block font-bold">
+                  Prochaine date&nbsp;: {formatWeekendDate(nextWeekendDate)}
+                </strong>
+              )}
             </p>
-            {nextWeekendDate && (
-              <p className="text-xs font-semibold text-pili mt-2">
-                Prochaine date disponible : {formatWeekendDate(nextWeekendDate)}
-              </p>
-            )}
           </div>
         )}
 
-        {/* Histoire du plat */}
-        {story && (
-          <div className="bg-safou/12 rounded-2xl p-4 mb-6 border border-safou/20">
-            <p className="font-serif font-semibold text-encre text-sm mb-1">{story.title}</p>
-            <p className="text-xs text-encre/65 leading-relaxed">{story.body}</p>
-          </div>
-        )}
+        {/* ─── Histoire du plat ─────────────────────────────────── */}
+        {story && <StoryBlock story={story} />}
 
-        {/* ─── Choix du piquant ─────────────────────────────── */}
+        {/* ─── Niveau de piquant ────────────────────────────────── */}
         {dish.spice_customizable && (
-          <Section icon={<Flame className="h-4 w-4 text-pili" />} title="Niveau de piquant">
-            <div className="grid grid-cols-2 gap-2">
-              {SPICE_OPTIONS.map(opt => (
-                <RadioChip
-                  key={opt.value}
-                  label={opt.label}
-                  color={opt.color}
-                  selected={spice === opt.value}
-                  onClick={() => setSpice(opt.value)}
-                />
-              ))}
+          <Section title="Ton piquant">
+            <div role="radiogroup" aria-label="Niveau de piquant" className="grid grid-cols-2 gap-2.5">
+              {SPICE_LEVELS.map(opt => {
+                const selected = spice === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setSpice(opt.value)}
+                    className={cn(
+                      "flex min-h-[84px] flex-col items-start justify-between rounded-[20px] p-3.5 text-left transition-colors duration-150",
+                      selected ? "bg-encre text-kwanga" : "bg-carte text-encre ring-1 ring-inset ring-encre/12"
+                    )}
+                  >
+                    <PiliScale level={opt.chilis} onDark={selected} />
+                    <span>
+                      <span className="block text-[16px] font-extrabold leading-tight">{opt.label}</span>
+                      <span className={cn("block text-[13px]", selected ? "text-kwanga/80" : "text-encre/70")}>{opt.hint}</span>
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </Section>
         )}
 
-        {/* ─── Accompagnement (options gratuites) ───────────── */}
+        {/* ─── Accompagnement (options incluses) ────────────────── */}
         {baseOptions.length > 0 && (
-          <Section title="Accompagnement">
-            <div className="space-y-2">
+          <Section title="Ton accompagnement" hint="Inclus">
+            <div role="radiogroup" aria-label="Accompagnement" className="space-y-2">
               {baseOptions.map(opt => (
-                <RadioChip
+                <OptionRow
                   key={opt.id}
+                  role="radio"
                   label={opt.name}
-                  color="border-encre/20 text-encre bg-carte"
                   selected={selectedBase === opt.id}
                   onClick={() => setSelectedBase(opt.id)}
                 />
@@ -221,48 +241,59 @@ export function DishDetailClient({ dish }: Props) {
           </Section>
         )}
 
-        {/* ─── Suppléments (options payantes) ───────────────── */}
+        {/* ─── Suppléments (options payantes) ───────────────────── */}
         {extras.length > 0 && (
-          <Section title="Suppléments">
+          <Section title="Des suppléments ?" hint="Facultatif">
             <div className="space-y-2">
-              {extras.map(opt => (
-                <CheckChip
-                  key={opt.id}
-                  label={opt.name}
-                  extra={opt.extra_price_cents}
-                  checked={selectedExtras.has(opt.id)}
-                  onChange={checked => {
-                    setSelectedExtras(prev => {
-                      const next = new Set(prev)
-                      if (checked) next.add(opt.id)
-                      else next.delete(opt.id)
-                      return next
-                    })
-                  }}
-                />
-              ))}
+              {extras.map(opt => {
+                const checked = selectedExtras.has(opt.id)
+                return (
+                  <OptionRow
+                    key={opt.id}
+                    role="checkbox"
+                    label={opt.name}
+                    detail={`+ ${formatPrice(opt.extra_price_cents)}`}
+                    selected={checked}
+                    onClick={() => {
+                      setSelectedExtras(prev => {
+                        const next = new Set(prev)
+                        if (checked) next.delete(opt.id)
+                        else next.add(opt.id)
+                        return next
+                      })
+                    }}
+                  />
+                )
+              })}
             </div>
           </Section>
         )}
+
+        {/* ─── Allergènes ───────────────────────────────────────── */}
+        <Section title="Allergènes">
+          <AllergensBlock allergens={dish.allergens ?? null} />
+        </Section>
       </div>
 
-      {/* ─── Barre action en VERRE — flotte au-dessus du contenu ─ */}
-      <div className="glass-footer fixed bottom-0 left-0 right-0 px-4 py-4">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          {/* Bouton ajouter — plein liboke */}
-          <Button
-            size="lg"
-            className="flex-1"
-            onClick={handleAdd}
-            disabled={added}
-          >
-            {added ? (
-              <>✓ Ajouté !</>
-            ) : (
+      {/* ─── Barre d'action en verre — flotte au-dessus du contenu ─ */}
+      <div className="fixed inset-x-0 z-40 px-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="verre mx-auto flex max-w-lg items-center gap-3 rounded-full p-2 pl-6 shadow-[0_12px_32px_rgba(43,27,18,0.3)]">
+          <p className="shrink-0 leading-tight text-kwanga">
+            <span className="block text-[12px] font-semibold text-kwanga/80">Total</span>
+            <span className="block text-[20px] font-extrabold tabular-nums" aria-live="polite">{formatPrice(totalPrice)}</span>
+          </p>
+          <Button className="min-w-0 flex-1" onClick={handleAdd} disabled={added || soldOut}>
+            {soldOut ? (
+              "Épuisé"
+            ) : added ? (
               <>
-                <ShoppingBag className="h-4 w-4" />
-                {weekendDish ? "Précommander" : "Ajouter"} · {formatPrice(totalPrice)}
+                <Check className="h-5 w-5" strokeWidth={3} aria-hidden />
+                Ajouté
               </>
+            ) : weekendDish ? (
+              "Précommander"
+            ) : (
+              "Ajouter au panier"
             )}
           </Button>
         </div>
@@ -275,73 +306,131 @@ export function DishDetailClient({ dish }: Props) {
 
 function Section({
   title,
-  icon,
+  hint,
   children,
 }: {
   title: string
-  icon?: React.ReactNode
+  hint?: string
   children: React.ReactNode
 }) {
   return (
-    <div className="mb-5">
-      <div className="flex items-center gap-1.5 mb-3">
-        {icon}
-        <h2 className="font-semibold text-encre text-sm uppercase tracking-wide">{title}</h2>
+    <section className="mt-8">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="titre text-[26px] text-encre">{title}</h2>
+        {hint && <span className="text-[14px] font-semibold text-encre/70">{hint}</span>}
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 
-function RadioChip({
+function OptionRow({
+  role,
   label,
-  color,
+  detail,
   selected,
   onClick,
 }: {
+  role: "radio" | "checkbox"
   label: string
-  color: string
+  detail?: string
   selected: boolean
   onClick: () => void
 }) {
   return (
     <button
+      type="button"
+      role={role}
+      aria-checked={selected}
       onClick={onClick}
       className={cn(
-        "w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all",
-        selected ? color : "border-encre/15 text-encre/60 bg-carte hover:border-encre/30"
+        "flex min-h-[56px] w-full items-center gap-3 rounded-[20px] px-4 py-3 text-left text-[16px] font-bold transition-colors duration-150",
+        selected ? "bg-encre text-kwanga" : "bg-carte text-encre ring-1 ring-inset ring-encre/12"
       )}
     >
-      {label}
+      <span
+        aria-hidden
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center border-2",
+          role === "radio" ? "rounded-full" : "rounded-[8px]",
+          selected ? "border-safou bg-safou text-encre" : "border-encre/35"
+        )}
+      >
+        {selected && <Check className="h-4 w-4" strokeWidth={3.5} />}
+      </span>
+      <span className="min-w-0 flex-1">{label}</span>
+      {detail && <span className="shrink-0 tabular-nums">{detail}</span>}
     </button>
   )
 }
 
-function CheckChip({
-  label,
-  extra,
-  checked,
-  onChange,
-}: {
-  label: string
-  extra: number
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
+/** L'histoire du plat : d'abord le texte, puis la version audio quand elle existe. */
+function StoryBlock({ story }: { story: Story }) {
+  const [open, setOpen] = useState(false)
+  const long = story.body.length > 320
+
   return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all",
-        checked
-          ? "border-safou bg-safou/10 text-encre"
-          : "border-encre/15 bg-carte text-encre/60 hover:border-encre/30"
+    <section aria-labelledby="histoire-plat" className="mt-8 rounded-[28px] bg-liboke p-6 text-white">
+      <p className="inline-flex items-center gap-1.5 rounded-full bg-encre px-3 py-1.5 text-[13px] font-bold text-kwanga">
+        <BookOpen className="h-4 w-4" aria-hidden />
+        L&apos;histoire du plat
+      </p>
+      <h2 id="histoire-plat" className="titre mt-4 text-[30px] text-kwanga text-balance">{story.title}</h2>
+      <p className={cn("mt-3 whitespace-pre-line text-[19px] font-bold leading-snug", long && !open && "line-clamp-6")}>
+        {story.body}
+      </p>
+      {long && (
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+          className="mt-3 h-11 rounded-full bg-encre px-5 text-[15px] font-bold text-kwanga"
+        >
+          {open ? "Replier" : "Lire la suite"}
+        </button>
       )}
-    >
-      <span>{label}</span>
-      <span className={checked ? "text-encre font-semibold" : "text-encre/40"}>
-        +{formatPrice(extra)}
-      </span>
-    </button>
+      {story.audio_url && (
+        <div className="mt-4">
+          <p className="mb-2 text-[19px] font-bold">Écoute l&apos;histoire</p>
+          <audio controls preload="none" src={story.audio_url} className="h-11 w-full">
+            Ton navigateur ne peut pas lire cet audio.
+          </audio>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function AllergensBlock({ allergens }: { allergens: string[] | null }) {
+  if (allergens === null) {
+    return (
+      <div className="flex gap-3 rounded-[20px] bg-sable p-4">
+        <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-pili" aria-hidden />
+        <p className="text-[15px] leading-relaxed text-encre">
+          La liste n&apos;est pas encore renseignée pour ce plat. Si tu as une allergie,
+          écris-le dans la remarque de ta commande&nbsp;: Nathy te répondra avant de cuisiner.
+        </p>
+      </div>
+    )
+  }
+  if (allergens.length === 0) {
+    return (
+      <p className="rounded-[20px] bg-sable p-4 text-[15px] leading-relaxed text-encre">
+        Aucun des 14 allergènes à déclaration obligatoire dans la recette.
+        La cuisine en manipule d&apos;autres&nbsp;: des traces restent possibles.
+      </p>
+    )
+  }
+  return (
+    <div>
+      <ul className="flex flex-wrap gap-2">
+        {allergens.map(a => (
+          <li key={a} className="rounded-full bg-pili px-3.5 py-2 text-[15px] font-bold text-white">{a}</li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[14px] leading-relaxed text-encre/70">
+        La cuisine manipule aussi d&apos;autres allergènes&nbsp;: des traces restent possibles.
+      </p>
+    </div>
   )
 }
