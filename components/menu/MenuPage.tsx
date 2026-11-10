@@ -28,6 +28,8 @@ import type { Category, CulinaryOrigin, Dish } from "@/lib/types"
 interface MenuPageProps {
   categories: Category[]
   dishes: Dish[]
+  /** La lecture du menu a échoué côté serveur : on l'annonce au lieu d'un menu vide. */
+  loadError?: boolean
 }
 
 /** Univers affiché — « congolese » est l'onglet ouvert par défaut. */
@@ -60,7 +62,7 @@ function categoryIcon(slug: string): LucideIcon {
 
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 xl:grid-cols-5"
 
-export function MenuPage({ categories, dishes }: MenuPageProps) {
+export function MenuPage({ categories, dishes, loadError = false }: MenuPageProps) {
   const [universe, setUniverse] = useState<UniverseFilter>("congolese")
   const [activeType, setActiveType] = useState<string | null>(null)
   const [query, setQuery] = useState("")
@@ -285,7 +287,16 @@ export function MenuPage({ categories, dishes }: MenuPageProps) {
             </p>
           </div>
 
-          {visibleDishes.length === 0 ? (
+          {loadError ? (
+            <div role="alert" className="mt-6 rounded-[26px] bg-sable px-6 py-10 text-center">
+              <p className="text-[16px] font-semibold text-encre">
+                Le menu ne charge pas pour le moment. Réessaie dans un instant.
+              </p>
+              <button type="button" onClick={() => window.location.reload()} className={buttonClass("sombre", "md", "mt-5")}>
+                Recharger la page
+              </button>
+            </div>
+          ) : visibleDishes.length === 0 ? (
             <div className="mt-6 rounded-[26px] bg-sable px-6 py-10 text-center">
               <p className="text-[16px] font-semibold text-encre">
                 {q

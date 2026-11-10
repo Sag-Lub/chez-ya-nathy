@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export default async function Home() {
   const supabase = await createClient()
 
-  const [{ data: categories }, { data: dishes }] = await Promise.all([
+  const [categoriesResult, dishesResult] = await Promise.all([
     supabase
       .from("categories")
       .select("*")
@@ -21,6 +21,15 @@ export default async function Home() {
       .order("sort_order"),
   ])
 
+  // Une erreur de lecture ne doit jamais ressembler à un menu vide :
+  // on l'écrit dans les journaux du serveur (Vercel → Logs) et on le dit au visiteur.
+  const readError = categoriesResult.error ?? dishesResult.error
+  if (readError) {
+    console.error("[accueil] lecture du menu impossible :", readError.code, readError.message)
+  }
+  const categories = categoriesResult.data
+  const dishes = dishesResult.data
+
   return (
     <>
       {/* Voile de première visite : montré avant le premier rendu (script du layout racine),
@@ -31,6 +40,7 @@ export default async function Home() {
       <MenuPage
         categories={(categories ?? []) as Category[]}
         dishes={(dishes ?? []) as Dish[]}
+        loadError={Boolean(readError)}
       />
     </>
   )
