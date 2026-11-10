@@ -1,5 +1,5 @@
 -- ============================================================
--- NATHY FOOD — Schéma initial Supabase
+-- CHEZ YA NATHY — Schéma initial Supabase
 -- Migration 0001 — à exécuter dans l'éditeur SQL de Supabase
 -- Convention : tous les prix sont en CENTIMES (integer),
 -- jamais en décimal, pour éviter les erreurs d'arrondi.

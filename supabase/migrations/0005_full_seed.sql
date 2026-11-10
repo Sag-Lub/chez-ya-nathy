@@ -67,15 +67,15 @@ FROM (VALUES
 
   ('Mafé Bœuf',          'mafe-boeuf',      'Ragoût de bœuf à la pâte d''arachide',
    'Bœuf mijoté dans une sauce épaisse à la pâte d''arachide, typique d''Afrique de l''Ouest.',
-   1450, '/images/mafe-poulet.jpg', true, ARRAY[0,6]::smallint[], 9),
+   1450, '/images/mafe-de-boeuf.jpg', true, ARRAY[0,6]::smallint[], 9),
 
   ('Attiéké Poulet',     'attieke-poulet',  'Semoule de manioc avec poulet grillé',
    'Attiéké léger et parfumé accompagné de poulet grillé aux épices. La spécialité de Côte d''Ivoire.',
-   1300, '/images/attieke.jpg', false, NULL::smallint[], 10),
+   1300, '/images/attieke-poulet.jpg', false, NULL::smallint[], 10),
 
   ('Attiéké Poisson',    'attieke-poisson', 'Semoule de manioc avec poisson grillé',
    'Attiéké léger et parfumé accompagné de poisson grillé. Le classique ivoirien par excellence.',
-   1350, '/images/attieke.jpg', false, NULL::smallint[], 11)
+   1350, '/images/attieke-poisson.jpg', false, NULL::smallint[], 11)
 ) AS v(name, slug, subtitle, description, price_cents, image_url, spice, days, sort)
 ON CONFLICT (slug) DO NOTHING;
 
@@ -95,7 +95,7 @@ INSERT INTO dishes
   (category_id, name, slug, subtitle, description, price_cents, image_url, is_available, sort_order)
 SELECT
   (SELECT id FROM categories WHERE slug = 'accompagnements'),
-  v.name, v.slug, v.subtitle, v.desc, v.price, v.img, true, v.sort
+  v.name, v.slug, v.subtitle, v.descr, v.price, v.img, true, v.sort
 FROM (VALUES
   ('Riz blanc',           'riz-blanc',           'Riz cuit à la vapeur',
    'Riz basmati cuit à la vapeur, léger et parfumé.',                    250, '/images/riz-blanc.jpg',                1),
@@ -109,7 +109,7 @@ FROM (VALUES
    'Plantains bouillis, onctueux et naturellement sucrés.',              150, '/images/bananes_plantains-bouillie.jpg', 5),
   ('Mikatés',             'mikates',             'Beignets congolais',
    'Petits beignets dorés et moelleux, sucrés ou nature.',               200, '/images/mikate.jpg',                   6)
-) AS v(name, slug, subtitle, desc, price, img, sort)
+) AS v(name, slug, subtitle, descr, price, img, sort)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ─── Boissons ─────────────────────────────────────────────────
@@ -117,7 +117,7 @@ INSERT INTO dishes
   (category_id, name, slug, subtitle, description, price_cents, image_url, is_available, sort_order)
 SELECT
   (SELECT id FROM categories WHERE slug = 'boissons'),
-  v.name, v.slug, v.subtitle, v.desc, v.price, v.img, true, v.sort
+  v.name, v.slug, v.subtitle, v.descr, v.price, v.img, true, v.sort
 FROM (VALUES
   ('Bissap',                  'bissap',               'Infusion d''hibiscus',
    'Boisson d''hibiscus séchée, légèrement sucrée et acidulée.',   400, '/images/bissap.png',                  1),
@@ -125,5 +125,5 @@ FROM (VALUES
    'Boisson au fruit du baobab, crémeuse et riche en vitamine C.', 450, '/images/jus-baobab-bouye.png',        2),
   ('Jus de gingembre (Tangawisi)', 'jus-gingembre-tangawisi', 'Jus de gingembre frais',
    'Gingembre pressé avec citron, légèrement piquant et frais.',   400, '/images/jus-gingembre-tangawisi.png', 3)
-) AS v(name, slug, subtitle, desc, price, img, sort)
+) AS v(name, slug, subtitle, descr, price, img, sort)
 ON CONFLICT (slug) DO NOTHING;
