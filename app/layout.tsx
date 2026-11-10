@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+import { FIRST_VISIT_SCRIPT } from "@/components/onboarding/first-visit";
 
 // Fraunces pour les titres (axe SOFT : formes arrondies, proches du lettrage du logo),
 // Inter pour le texte et l'interface.
@@ -63,8 +64,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${fraunces.variable} ${inter.variable} h-full`}>
+    // suppressHydrationWarning : le script ci-dessous peut ajouter une classe à <html> avant React
+    <html lang="fr" className={`${fraunces.variable} ${inter.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans antialiased">
+        <script dangerouslySetInnerHTML={{ __html: FIRST_VISIT_SCRIPT }} />
         {children}
       </body>
     </html>

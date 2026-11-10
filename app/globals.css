@@ -38,6 +38,15 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Première visite : voile liboke affiché avant le premier rendu
+   (classe posée par le script de app/layout.tsx, retirée par l'onboarding). */
+#voile-bienvenue {
+  display: none;
+}
+html.premiere-visite #voile-bienvenue {
+  display: block;
+}
+
 body {
   background-color: var(--color-kwanga);
   color: var(--color-encre);

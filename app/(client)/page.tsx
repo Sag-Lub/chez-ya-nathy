@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { MenuPage } from "@/components/menu/MenuPage"
-import { OnboardingGate, VEIL_ID, VEIL_SCRIPT } from "@/components/onboarding/OnboardingGate"
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate"
+import { VEIL_ID } from "@/components/onboarding/first-visit"
 import type { Category, Dish } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -22,9 +23,9 @@ export default async function Home() {
 
   return (
     <>
-      {/* Voile de première visite : affiché avant le premier rendu, puis relayé par l'onboarding */}
-      <div id={VEIL_ID} aria-hidden suppressHydrationWarning className="fixed inset-0 z-[190] hidden bg-liboke" />
-      <script dangerouslySetInnerHTML={{ __html: VEIL_SCRIPT }} />
+      {/* Voile de première visite : montré avant le premier rendu (script du layout racine),
+          puis relayé par l'onboarding */}
+      <div id={VEIL_ID} aria-hidden className="fixed inset-0 z-[190] bg-liboke" />
       <OnboardingGate />
 
       <MenuPage

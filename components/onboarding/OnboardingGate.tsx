@@ -3,22 +3,13 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react"
 import dynamic from "next/dynamic"
 import { storageKeys } from "@/lib/config"
+import { FIRST_VISIT_CLASS } from "./first-visit"
 
 // L'onboarding (logo vectorisé + illustrations) n'est téléchargé qu'à la première visite.
 const Onboarding = dynamic(() => import("./Onboarding"), { ssr: false })
 
-export const VEIL_ID = "voile-bienvenue"
-
-/**
- * Script exécuté avant le premier affichage : à la première visite, il montre
- * un voile liboke pour que la marque s'impose tout de suite, sans flash du menu.
- * Par sécurité, le voile se retire tout seul au bout de 6 s : il ne bloque jamais l'app.
- */
-export const VEIL_SCRIPT = `try{if(!localStorage.getItem("${storageKeys.onboardingSeen}")){var v=document.getElementById("${VEIL_ID}");v.style.display="block";setTimeout(function(){v.style.display="none"},6000)}}catch(e){}`
-
 function hideVeil() {
-  const veil = document.getElementById(VEIL_ID)
-  if (veil) veil.style.display = "none"
+  document.documentElement.classList.remove(FIRST_VISIT_CLASS)
 }
 
 function readSeen(): boolean {
