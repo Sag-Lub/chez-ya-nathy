@@ -1,77 +1,29 @@
-"use client"
+import { Logo } from "@/components/brand/Logo"
+import { LoginForm } from "./LoginForm"
 
-import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/Button"
-import { Loader2 } from "lucide-react"
+export const metadata = { title: "Espace cuisine", robots: { index: false, follow: false } }
 
-export default function AdminLoginPage({
+const ERRORS: Record<string, string> = {
+  lien_invalide: "Ce lien de connexion n'est plus valable. Demande-en un nouveau.",
+  acces_refuse: "Ce compte n'a pas accès à l'espace cuisine.",
+}
+
+export default async function AdminLoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  const [sent,    setSent]    = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const supabase = createClient()
-    const { error: sbErr } = await supabase.auth.signInWithOtp({
-      email: "chezyanathy@gmail.com",
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-      },
-    })
-
-    if (sbErr) {
-      setError("Impossible d'envoyer le lien. Réessayez.")
-    } else {
-      setSent(true)
-    }
-    setLoading(false)
-  }
+  const { error } = await searchParams
 
   return (
-    <div className="min-h-screen bg-kwanga flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-6">
-        {/* Logo */}
-        <div className="text-center">
-          <img src="/Logo_ChezYaNathy.png" alt="Chez ya Nathy" className="h-20 w-auto mx-auto" />
-          <p className="text-encre/50 text-sm mt-1">Espace cuisine</p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-kwanga px-6 py-10">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center text-center">
+          <Logo height={120} priority />
+          <h1 className="titre mt-5 text-[34px] text-encre">Espace cuisine</h1>
         </div>
-
-        {sent ? (
-          <div className="bg-carte rounded-2xl p-6 text-center space-y-3 shadow-sm">
-            <div className="text-4xl">📧</div>
-            <p className="font-semibold text-encre">Lien envoyé !</p>
-            <p className="text-sm text-encre/60">
-              Vérifiez votre boîte mail <strong>chezyanathy@gmail.com</strong> et cliquez sur le lien de connexion.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-carte rounded-2xl p-6 space-y-4 shadow-sm">
-            <p className="text-sm text-encre/70 text-center">
-              Un lien magique sera envoyé à<br />
-              <strong className="text-encre">chezyanathy@gmail.com</strong>
-            </p>
-
-            {error && (
-              <p className="text-xs text-pili bg-pili/8 rounded-xl px-4 py-3 text-center">{error}</p>
-            )}
-
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
-              {loading
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Envoi…</>
-                : "Recevoir le lien de connexion"
-              }
-            </Button>
-          </form>
-        )}
+        <LoginForm initialError={error ? ERRORS[error] ?? null : null} />
       </div>
-    </div>
+    </main>
   )
 }
